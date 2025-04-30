@@ -33,18 +33,22 @@ ENV/
 *.swp
 *.swo
 
-# Logs and databases
-*.log
-*.sqlite3
-
-# Project specific
+# Testing
 .pytest_cache/
 .coverage
 htmlcov/
-.log/
+.tox/
 
-# Recipe processing directories
-V1.4/recetas/procesadas/
-V1.4/recetas/sin_procesar/
-V1.3/recetas/procesadas/
-V1.3/recetas/sin_procesar/ 
+# Logs and databases
+*.log
+.log/
+*.sqlite3
+
+# Project specific
+recetas/procesadas/
+recetas/sin_procesar/
+!recetas/sin_procesar/receta_compleja_para_test.txt
+
+# OS specific
+.DS_Store
+Thumbs.db 
