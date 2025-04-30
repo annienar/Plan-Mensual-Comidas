@@ -1,0 +1,44 @@
+{
+  "git": {
+    "commit_message": {
+      "format": "type(scope): description",
+      "types": [
+        "feat",
+        "fix",
+        "docs",
+        "style",
+        "refactor",
+        "test",
+        "chore"
+      ],
+      "max_length": 72,
+      "require_body_for_breaking_change": true
+    },
+    "branch": {
+      "naming": {
+        "pattern": "^(feature|bugfix|hotfix|release)/[a-z0-9-]+$",
+        "examples": [
+          "feature/add-recipe-validation",
+          "bugfix/fix-pdf-parsing",
+          "release/v1.5.1"
+        ]
+      },
+      "protection": {
+        "main": {
+          "require_review": true,
+          "require_tests": true
+        }
+      }
+    },
+    "ignore": {
+      "patterns": [
+        ".env",
+        "*.pyc",
+        "__pycache__/",
+        ".venv/",
+        ".coverage",
+        "*.log"
+      ]
+    }
+  }
+}

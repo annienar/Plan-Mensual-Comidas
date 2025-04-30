@@ -1,0 +1,32 @@
+{
+  "python": {
+    "style": {
+      "max_line_length": 88,
+      "use_spaces": true,
+      "indent_size": 4,
+      "quotes": "double",
+      "allow_inline_comments": true,
+      "require_docstrings": true
+    },
+    "typing": {
+      "require_type_hints": true,
+      "allow_any": false,
+      "check_untyped_defs": true
+    },
+    "imports": {
+      "order": [
+        "standard_library",
+        "third_party",
+        "first_party"
+      ],
+      "group_by_package": true,
+      "allow_unused_imports": false
+    },
+    "naming": {
+      "functions": "snake_case",
+      "variables": "snake_case",
+      "classes": "PascalCase",
+      "constants": "UPPER_CASE"
+    }
+  }
+}

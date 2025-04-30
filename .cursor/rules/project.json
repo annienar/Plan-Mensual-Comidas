@@ -1,0 +1,51 @@
+{
+  "project": {
+    "recipe_processing": {
+      "required_metadata": [
+        "nombre",
+        "porciones",
+        "ingredientes",
+        "preparacion"
+      ],
+      "supported_extensions": [
+        ".txt",
+        ".pdf",
+        ".jpg",
+        ".jpeg",
+        ".png"
+      ],
+      "languages": ["es", "en"],
+      "output_formats": ["json", "md"]
+    },
+    "directory_structure": {
+      "enforce_structure": true,
+      "required_directories": [
+        "core/",
+        "tests/",
+        "recetas/sin_procesar/",
+        "recetas/procesadas/Receta Original/",
+        "recetas/procesadas/Recetas JSON/",
+        "recetas/procesadas/Recetas MD/"
+      ]
+    },
+    "testing": {
+      "min_coverage": 85,
+      "required_test_types": [
+        "unit",
+        "integration",
+        "recipe_processing"
+      ]
+    },
+    "documentation": {
+      "require_docstrings": true,
+      "docstring_style": "google",
+      "readme_sections": [
+        "Project Overview",
+        "Installation",
+        "Usage",
+        "Configuration",
+        "Development"
+      ]
+    }
+  }
+}
