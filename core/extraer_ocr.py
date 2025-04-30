@@ -76,7 +76,7 @@ def extraer_texto_desde_pdf_ocr(path_pdf: str) -> str:
     texto_extraido = ""
     try:
         paginas = convert_from_path(path_pdf)
-        for pagina in enumerate(paginas):
+        for _, pagina in enumerate(paginas):
             texto = pytesseract.image_to_string(pagina, lang="spa")
             if texto:
                 texto_extraido += texto + "\n"

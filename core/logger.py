@@ -5,6 +5,11 @@ Configura y proporciona funciones de logging consistentes.
 """
 
 import logging
+import os
+from datetime import datetime
+from typing import cast
+
+from core.config import ENCODING_DEFAULT, LOG_DIR, LOGGING_CONFIG
 
 
 def configurar_logger(nombre: str, nivel: int = logging.INFO) -> logging.Logger:
@@ -23,14 +28,38 @@ def configurar_logger(nombre: str, nivel: int = logging.INFO) -> logging.Logger:
 
     # Solo configurar si no tiene handlers
     if not logger.handlers:
-        handler = logging.StreamHandler()
-        handler.setFormatter(
+        # Configurar handler de consola
+        console_handler = logging.StreamHandler()
+        console_handler.setFormatter(
             logging.Formatter(
-                fmt="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-                datefmt="%Y-%m-%d %H:%M:%S",
+                fmt=cast(str, LOGGING_CONFIG["format"]),
+                datefmt=cast(str, LOGGING_CONFIG["datefmt"]),
             )
         )
-        logger.addHandler(handler)
+        logger.addHandler(console_handler)
+
+        # Configurar handler de archivo
+        if not LOG_DIR.exists():
+            os.makedirs(LOG_DIR, exist_ok=True)
+
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        log_file = LOG_DIR / f"log-{timestamp}-{nombre}.txt"
+
+        file_handler = logging.FileHandler(
+            log_file,
+            encoding=ENCODING_DEFAULT,
+        )
+        file_handler.setFormatter(
+            logging.Formatter(
+                fmt=cast(str, LOGGING_CONFIG["format"]),
+                datefmt=cast(str, LOGGING_CONFIG["datefmt"]),
+            )
+        )
+        logger.addHandler(file_handler)
+
+        # Silenciar loggers ruidosos
+        for noisy_logger in LOGGING_CONFIG["noisy_loggers"]:
+            logging.getLogger(noisy_logger).setLevel(logging.WARNING)
 
     return logger
 
