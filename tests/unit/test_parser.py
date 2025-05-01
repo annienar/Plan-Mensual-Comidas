@@ -1,12 +1,14 @@
 # tests/test_parser_unit.py
 from pathlib import Path
+
 import pytest
 
-from core.normalizador_recetas import parsear_linea_ingrediente, parsear_ingredientes
+from core.normalizador_recetas import parsear_ingredientes, parsear_linea_ingrediente
+
 
 # --- Setup común: inyectar receta compleja antes de glob ---
 def _setup_receta_compleja():
-    contenido = '''Receta Compleja Gourmet
+    contenido = """Receta Compleja Gourmet
 https://www.ejemplo.com/recetas/receta-compleja-gourmet
 
 Ingredientes para 2–4 porciones
@@ -40,22 +42,27 @@ Preparación:
 Notas:
 - Para versión vegana, sustituir huevo por 1 cda de linaza molida + 3 cda agua.
 - Esta receta admite variaciones: queso rallado, nueces, hierbas secas.
-'''  # noqa
+"""  # noqa
     root = Path(__file__).resolve().parents[1]
-    sin_pro = root / 'recetas' / 'sin_procesar'
+    sin_pro = root / "recetas" / "sin_procesar"
     sin_pro.mkdir(parents=True, exist_ok=True)
-    path = sin_pro / 'receta_compleja_para_test.txt'
-    path.write_text(contenido, encoding='utf-8')
+    path = sin_pro / "receta_compleja_para_test.txt"
+    path.write_text(contenido, encoding="utf-8")
+
 
 # Configurar entorno: fixture que se ejecuta antes de cada módulo
 def pytest_fixture_setup_receta_compleja(request):
     _setup_receta_compleja()
 
+
 # 2) Test dinámico de parsear_ingredientes para todos los .txt incluyendo la compleja de parsear_ingredientes para todos los .txt incluyendo la compleja
 CARPETA_SIN_PROCESAR = Path(__file__).resolve().parents[1] / "recetas" / "sin_procesar"
 TXT_FILES = list(CARPETA_SIN_PROCESAR.glob("*.txt"))
 if not TXT_FILES:
-    pytest.skip(f"No hay archivos .txt en {CARPETA_SIN_PROCESAR}", allow_module_level=True)
+    pytest.skip(
+        f"No hay archivos .txt en {CARPETA_SIN_PROCESAR}", allow_module_level=True
+    )
+
 
 @pytest.mark.parametrize("path_archivo", TXT_FILES)
 def test_parsear_ingredientes_completo(path_archivo):
@@ -67,4 +74,3 @@ def test_parsear_ingredientes_completo(path_archivo):
     ingredientes = parsear_ingredientes(texto)
     assert isinstance(ingredientes, list), "La función debe devolver una lista"
     assert ingredientes, f"No se extrajo ningún ingrediente de {path_archivo.name}"
-

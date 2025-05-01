@@ -1,20 +1,24 @@
 # tests/test_parser_integration.py
 import os
-import pytest
 from pathlib import Path
 
+import pytest
+
 from core.extraer_txt import extraer_texto_desde_txt
+from core.generar_md import generar_md_todas
 from core.normalizador_recetas import normalizar_receta_desde_texto
 from core.procesar_recetas import procesar_todo_en_sin_procesar
-from core.generar_md import generar_md_todas
 
 # Directorio base de recetas sin procesar
-CARPETA_SIN_PROCESAR = Path(__file__).resolve().parents[1] / 'recetas' / 'sin_procesar'
-TXT_FILES = list(CARPETA_SIN_PROCESAR.glob('*.txt'))
+CARPETA_SIN_PROCESAR = Path(__file__).resolve().parents[1] / "recetas" / "sin_procesar"
+TXT_FILES = list(CARPETA_SIN_PROCESAR.glob("*.txt"))
 if not TXT_FILES:
-    pytest.skip(f"No hay archivos .txt en {CARPETA_SIN_PROCESAR}", allow_module_level=True)
+    pytest.skip(
+        f"No hay archivos .txt en {CARPETA_SIN_PROCESAR}", allow_module_level=True
+    )
 
-@pytest.mark.parametrize('path_archivo', TXT_FILES)
+
+@pytest.mark.parametrize("path_archivo", TXT_FILES)
 def test_integracion_txt_parser(path_archivo):
     # 1) Extraer texto
     texto = extraer_texto_desde_txt(str(path_archivo))
@@ -25,14 +29,16 @@ def test_integracion_txt_parser(path_archivo):
 
     # 3) Estructura mínima
     assert isinstance(receta, dict)
-    for campo in ('nombre', 'url_origen', 'porciones', 'ingredientes', 'preparacion'):
+    for campo in ("nombre", "url_origen", "porciones", "ingredientes", "preparacion"):
         assert campo in receta, f"Falta campo '{campo}' en la receta"
 
     # 4) Validaciones
-    assert receta['nombre'], "El nombre no debe estar vacío"
-    assert isinstance(receta['porciones'], int), "Porciones debe ser int"
-    assert isinstance(receta['ingredientes'], list) and receta['ingredientes'], "Debe haber al menos un ingrediente"
-    assert isinstance(receta['preparacion'], list), "Preparación debe ser lista"
+    assert receta["nombre"], "El nombre no debe estar vacío"
+    assert isinstance(receta["porciones"], int), "Porciones debe ser int"
+    assert (
+        isinstance(receta["ingredientes"], list) and receta["ingredientes"]
+    ), "Debe haber al menos un ingrediente"
+    assert isinstance(receta["preparacion"], list), "Preparación debe ser lista"
 
 
 def test_generacion_md_para_receta_compleja():
@@ -41,7 +47,7 @@ def test_generacion_md_para_receta_compleja():
     comprueba contenido clave en el MD de la receta compleja.
     """
     # Preparar la receta compleja en sin_procesar
-    contenido_complejo = '''Receta Compleja Gourmet
+    contenido_complejo = """Receta Compleja Gourmet
 https://www.ejemplo.com/recetas/receta-compleja-gourmet
 
 Ingredientes para 2–4 porciones
@@ -75,11 +81,11 @@ Preparación:
 Notas:
 - Para versión vegana, sustituir huevo por 1 cda de linaza molida + 3 cda agua.
 - Esta receta admite variaciones: queso rallado, nueces, hierbas secas.
-'''  # noqa
+"""  # noqa
     sin_pro = CARPETA_SIN_PROCESAR
-    path_complejo = sin_pro / 'receta_compleja_para_test.txt'
+    path_complejo = sin_pro / "receta_compleja_para_test.txt"
     # Escribir el archivo de prueba
-    path_complejo.write_text(contenido_complejo, encoding='utf-8')
+    path_complejo.write_text(contenido_complejo, encoding="utf-8")
 
     # 1) Procesar y generar JSON y MD
     procesar_todo_en_sin_procesar()
@@ -87,13 +93,18 @@ Notas:
 
     # 2) Ubicar el MD generado
     base_dir = Path(__file__).resolve().parents[1]
-    md_file = base_dir / 'recetas' / 'procesadas' / 'Recetas MD' / 'receta_compleja_para_test.md'
+    md_file = (
+        base_dir
+        / "recetas"
+        / "procesadas"
+        / "Recetas MD"
+        / "receta_compleja_para_test.md"
+    )
     assert md_file.exists(), f"No se generó el MD para la receta compleja: {md_file}"
 
-    content = md_file.read_text(encoding='utf-8')
+    content = md_file.read_text(encoding="utf-8")
     # Verificaciones específicas
-    assert '# Receta Compleja Gourmet' in content
-    assert '- 1 1/2 taza de harina de trigo integral' in content
-    assert '- 100 g de chocolate troceado' in content
-    assert '- sal al gusto' in content
-
+    assert "# Receta Compleja Gourmet" in content
+    assert "- 1 1/2 taza de harina de trigo integral" in content
+    assert "- 100 g de chocolate troceado" in content
+    assert "- sal al gusto" in content

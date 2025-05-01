@@ -6,13 +6,44 @@ Gestiona el procesamiento de recetas y generación de documentos.
 
 import argparse
 import sys
+from pathlib import Path
+from typing import Any, Dict, List
 
-from core.config import NOMBRE_PROYECTO, VERSION
+from core.config import DIR_SIN_PROCESAR, NOMBRE_PROYECTO, VERSION
 from core.generar_md import generar_md_todas
 from core.logger import configurar_logger, log_error, log_info
+from core.metadatos_recetas import normalizar_receta_desde_texto
 from core.procesar_recetas import procesar_todo_en_sin_procesar
 
 logger = configurar_logger("gestor")
+
+
+class GestorRecetas:
+    """Clase para gestionar el procesamiento y almacenamiento de recetas."""
+
+    def procesar_receta(self, path: Path) -> Dict[str, Any]:
+        """Procesa una receta desde un archivo.
+
+        Args:
+            path: Ruta al archivo de receta
+
+        Returns:
+            Dict con la receta normalizada
+        """
+        with open(path, "r", encoding="utf-8") as f:
+            texto = f.read()
+        return normalizar_receta_desde_texto(texto)
+
+    def procesar_todas_recetas(self) -> List[Dict[str, Any]]:
+        """Procesa todas las recetas en el directorio sin procesar.
+
+        Returns:
+            Lista de recetas normalizadas
+        """
+        recetas = []
+        for path in DIR_SIN_PROCESAR.glob("*.txt"):
+            recetas.append(self.procesar_receta(path))
+        return recetas
 
 
 def main() -> None:
