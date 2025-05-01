@@ -1,11 +1,11 @@
-import os
 import hashlib
 import json
+import os
+
 from dotenv import load_dotenv
 from notion_client import Client
 
-
-from core.logger import configurar_logger, log_info, log_warning, log_error
+from core.logger import configurar_logger, log_error, log_info, log_warning
 from core.notificaciones import log_receta_normalizada
 
 logger = configurar_logger("gestor")
@@ -17,14 +17,15 @@ logger = configurar_logger("gestor")
 # (Versión limpia: sin bloques de prueba / demo.)
 # ------------------------------------------------------------------
 
+
 class GestorPlanComidas:
     def __init__(self):
         load_dotenv()
         self.notion = Client(auth=os.environ.get("NOTION_TOKEN"))
-        self.db_recetas        = os.environ.get("NOTION_RECETAS_DB")
-        self.db_alacena        = os.environ.get("NOTION_ALACENA_DB")
-        self.db_ingredientes   = os.environ.get("NOTION_INGREDIENTES_DB")
-        self.db_lista_compras  = os.environ.get("NOTION_LISTA_COMPRAS_DB")
+        self.db_recetas = os.environ.get("NOTION_RECETAS_DB")
+        self.db_alacena = os.environ.get("NOTION_ALACENA_DB")
+        self.db_ingredientes = os.environ.get("NOTION_INGREDIENTES_DB")
+        self.db_lista_compras = os.environ.get("NOTION_LISTA_COMPRAS_DB")
 
     # --------------------------------------------------------------
     # Helpers
@@ -67,8 +68,14 @@ class GestorPlanComidas:
                 properties={
                     "Nombre": {"title": [{"text": {"content": receta["nombre"]}}]},
                     "Calorías": {"number": receta.get("calorias", 0)},
-                    "Preparación": {"rich_text": [{"text": {"content": receta.get("preparacion", "")}}]},
-                    "Tags": {"multi_select": [{"name": t} for t in receta.get("tags", [])]},
+                    "Preparación": {
+                        "rich_text": [
+                            {"text": {"content": receta.get("preparacion", "")}}
+                        ]
+                    },
+                    "Tags": {
+                        "multi_select": [{"name": t} for t in receta.get("tags", [])]
+                    },
                 },
             )
             log_info(f"🆕 Receta creada: {receta['nombre']}")
@@ -84,8 +91,14 @@ class GestorPlanComidas:
                 properties={
                     "Nombre": {"title": [{"text": {"content": receta["nombre"]}}]},
                     "Calorías": {"number": receta.get("calorias", 0)},
-                    "Preparación": {"rich_text": [{"text": {"content": receta.get("preparacion", "")}}]},
-                    "Tags": {"multi_select": [{"name": t} for t in receta.get("tags", [])]},
+                    "Preparación": {
+                        "rich_text": [
+                            {"text": {"content": receta.get("preparacion", "")}}
+                        ]
+                    },
+                    "Tags": {
+                        "multi_select": [{"name": t} for t in receta.get("tags", [])]
+                    },
                 },
             )
             log_info(f"🔄 Receta actualizada: {receta['nombre']}")
@@ -136,7 +149,9 @@ class GestorPlanComidas:
         props = page_json["properties"]
         nombre = props.get("Nombre", {}).get("title", [{}])[0].get("plain_text", "")
         calorias = props.get("Calorías", {}).get("number", 0)
-        preparacion = props.get("Preparación", {}).get("rich_text", [{}])[0].get("plain_text", "")
+        preparacion = (
+            props.get("Preparación", {}).get("rich_text", [{}])[0].get("plain_text", "")
+        )
         tags = [t["name"] for t in props.get("Tags", {}).get("multi_select", [])]
         # Ingredientes se omiten aquí; asumirás lógica separada.
         return {

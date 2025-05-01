@@ -44,11 +44,11 @@ htmlcov/
 .log/
 *.sqlite3
 
-# Project specific
+# Project specific - allow test recipe but ignore processed files
 recetas/procesadas/
-recetas/sin_procesar/
+recetas/sin_procesar/*
 !recetas/sin_procesar/receta_compleja_para_test.txt
 
 # OS specific
 .DS_Store
-Thumbs.db 
+Thumbs.db

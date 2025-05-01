@@ -1,111 +1,184 @@
 # core/procesar_recetas.py
 
-import os
-import shutil
+"""
+Módulo principal para el procesamiento de recetas.
+
+Maneja la extracción, normalización y almacenamiento de recetas.
+"""
+
 import json
-from core.logger import configurar_logger, log_info, log_warning, log_error
-from core.notificaciones import (
-    log_creacion_carpeta,
-    log_movimiento_archivo,
-    log_creacion_archivo,
-    log_receta_normalizada,
-    log_error_archivo,
+from pathlib import Path
+from typing import List
+
+from core.config import (
+    DIR_RECETAS_JSON,
+    DIR_RECETAS_ORIGINALES,
+    DIR_SIN_PROCESAR,
+    ENCODING_DEFAULT,
+    es_extension_soportada,
+    obtener_tipo_archivo,
 )
-from core.normalizador_recetas import normalizar_receta_desde_texto
-from core.extraer_txt import extraer_texto_desde_txt
+from core.extraer_ocr import extraer_texto_desde_imagen
 from core.extraer_pdf import extraer_texto_desde_pdf
-from core.extraer_ocr import extraer_texto_desde_ocr
+from core.extraer_txt import extraer_texto_desde_txt
+from core.logger import configurar_logger, log_info, log_warning
+from core.normalizador_recetas import normalizar_receta_desde_texto
+from core.notificaciones import (
+    log_carpeta_vacia,
+    log_codificacion_invalida,
+    log_creacion_archivo,
+    log_error_archivo,
+    log_error_parseo,
+    log_formato_invalido,
+    log_fuentes_encontradas,
+    log_metadatos_incompletos,
+    log_movimiento_archivo,
+    log_receta_normalizada,
+)
 
 logger = configurar_logger("procesar_recetas")
 
 
-def procesar_archivo(path_archivo) -> bool:
+def validar_metadatos(receta: dict) -> List[str]:
     """
-    Procesa un único archivo de receta:
-      1. Extrae texto según la extensión
-      2. Normaliza el contenido
-      3. Crea carpetas de salida
-      4. Copia el original a Receta Original
-      5. Guarda JSON en Recetas JSON
-      6. Elimina el archivo original
+    Valida que la receta tenga todos los metadatos requeridos.
+
+    Args:
+        receta: Diccionario con los datos de la receta
+
+    Returns:
+        List[str]: Lista de campos faltantes
     """
-    ext = os.path.splitext(path_archivo)[1].lower().lstrip('.')
+    campos_requeridos = ["nombre", "ingredientes", "preparacion"]
+    faltantes = []
+
+    for campo in campos_requeridos:
+        if not receta.get(campo):
+            faltantes.append(campo)
+
+    # Validaciones específicas
+    if not isinstance(receta.get("porciones"), int) or receta["porciones"] <= 0:
+        faltantes.append("porciones")
+
+    return faltantes
+
+
+def procesar_archivo(path_archivo: Path) -> bool:
+    """
+    Procesa un único archivo de receta.
+
+    Args:
+        path_archivo: Ruta al archivo a procesar
+
+    Returns:
+        bool: True si el procesamiento fue exitoso, False en caso contrario
+    """
+    if not es_extension_soportada(path_archivo):
+        log_formato_invalido(
+            str(path_archivo), f"Extensión no soportada: {path_archivo.suffix}"
+        )
+        return False
+
     log_info(f"📄 Procesando: {path_archivo}")
 
-    base = os.path.splitext(os.path.basename(path_archivo))[0]
-    destino_original = f"recetas/procesadas/Receta Original/{os.path.basename(path_archivo)}"
-    ruta_json = f"recetas/procesadas/Recetas JSON/{base}.json"
+    destino_original = DIR_RECETAS_ORIGINALES / path_archivo.name
+    ruta_json = DIR_RECETAS_JSON / f"{path_archivo.stem}.json"
 
     try:
         # 1. EXTRAER TEXTO
-        if ext == "txt":
-            texto = extraer_texto_desde_txt(path_archivo)
-        elif ext == "pdf":
-            texto = extraer_texto_desde_pdf(path_archivo)
-            if not texto.strip():
-                log_warning("⚠️ PDF sin texto; aplicando OCR…")
-                texto = extraer_texto_desde_ocr(path_archivo)
-        elif ext in ("jpg", "jpeg", "png"):
-            texto = extraer_texto_desde_ocr(path_archivo)
-        else:
-            log_warning(f"⚠️ Tipo de archivo no soportado: {path_archivo}")
+        tipo_archivo = obtener_tipo_archivo(path_archivo)
+        try:
+            if tipo_archivo == "texto":
+                texto = extraer_texto_desde_txt(path_archivo)
+            elif tipo_archivo == "pdf":
+                texto = extraer_texto_desde_pdf(path_archivo)
+                if not texto.strip():
+                    log_warning("⚠️ PDF sin texto; aplicando OCR…")
+                    texto = extraer_texto_desde_imagen(path_archivo)
+            elif tipo_archivo == "imagen":
+                texto = extraer_texto_desde_imagen(path_archivo)
+            else:
+                log_formato_invalido(
+                    str(path_archivo), f"Tipo de archivo no soportado: {tipo_archivo}"
+                )
+                return False
+        except UnicodeError:
+            log_codificacion_invalida(str(path_archivo))
             return False
 
-        # 2. NORMALIZAR
-        receta = normalizar_receta_desde_texto(texto)
-        log_receta_normalizada(receta.get("nombre", "Sin nombre"))
+        # 2. NORMALIZAR Y VALIDAR
+        try:
+            receta = normalizar_receta_desde_texto(texto)
+
+            # Validar fuentes si existen
+            if "fuentes" in receta and receta["fuentes"]:
+                log_fuentes_encontradas(receta["nombre"], len(receta["fuentes"]))
+
+            # Validar metadatos
+            faltantes = validar_metadatos(receta)
+            if faltantes:
+                log_metadatos_incompletos(receta["nombre"], faltantes)
+
+            log_receta_normalizada(receta["nombre"])
+
+        except Exception as e:
+            log_error_parseo(path_archivo.name, "normalización", str(e))
+            return False
 
         # 3. CREAR CARPETAS DE SALIDA
-        for carpeta in (os.path.dirname(destino_original), os.path.dirname(ruta_json)):
-            if not os.path.exists(carpeta):
-                os.makedirs(carpeta, exist_ok=True)
-                log_creacion_carpeta(carpeta)
+        destino_original.parent.mkdir(parents=True, exist_ok=True)
+        ruta_json.parent.mkdir(parents=True, exist_ok=True)
 
         # 4. COPIAR ORIGINAL
-        shutil.copy2(path_archivo, destino_original)
-        log_movimiento_archivo(path_archivo, destino_original)
+        destino_original.write_bytes(path_archivo.read_bytes())
+        log_movimiento_archivo(str(path_archivo), str(destino_original))
 
         # 5. GUARDAR JSON
-        with open(ruta_json, "w", encoding="utf-8") as f:
-            json.dump(receta, f, ensure_ascii=False, indent=2)
-        log_creacion_archivo(ruta_json)
+        ruta_json.write_text(
+            json.dumps(receta, ensure_ascii=False, indent=2), encoding=ENCODING_DEFAULT
+        )
+        log_creacion_archivo(str(ruta_json))
 
         # 6. ELIMINAR ORIGINAL
-        os.remove(path_archivo)
+        path_archivo.unlink()
         log_info("✅ Procesado correctamente.")
         return True
 
     except Exception as e:
-        log_error_archivo(path_archivo, f"Error general: {e}")
+        log_error_archivo(str(path_archivo), f"Error general: {e}")
         # Limpieza de copia parcial
-        if os.path.exists(destino_original):
+        if destino_original.exists():
             try:
-                os.remove(destino_original)
+                destino_original.unlink()
                 log_warning(f"⚠️ Limpieza: se eliminó la copia de {destino_original}")
             except OSError:
                 pass
         return False
 
 
-def procesar_todo_en_sin_procesar():
+def procesar_todo_en_sin_procesar() -> bool:
     """
-    Procesa todos los archivos en recetas/sin_procesar/ y muestra un resumen.
+    Procesa todos los archivos pendientes en el directorio sin_procesar.
+
+    Returns:
+        bool: True si todos los archivos se procesaron correctamente
     """
-    carpeta = "recetas/sin_procesar"
-    archivos = [f for f in os.listdir(carpeta)
-                if f.lower().endswith((".txt", ".pdf", ".jpg", ".jpeg", ".png"))]
+    archivos = [
+        f
+        for f in DIR_SIN_PROCESAR.iterdir()
+        if f.is_file() and es_extension_soportada(f)
+    ]
 
     if not archivos:
-        log_info("📂 No hay archivos para procesar en recetas/sin_procesar.")
-        return
+        log_carpeta_vacia(str(DIR_SIN_PROCESAR))
+        return True
 
-    total = len(archivos)
-    exitosos = 0
-    for nombre in archivos:
-        if procesar_archivo(os.path.join(carpeta, nombre)):
-            exitosos += 1
+    exitos = 0
+    for archivo in archivos:
+        if procesar_archivo(archivo):
+            exitos += 1
 
-    log_info(f"🏁 Resumen: {exitosos}/{total} archivos procesados con éxito.")
+    return exitos == len(archivos)
 
 
 if __name__ == "__main__":

@@ -1,72 +1,79 @@
 """
-Logger central del proyecto Plan Mensual de Comidas
----------------------------------------------------
-• Un archivo por módulo  → .log/<versión>/log-<mm-dd-HHMM>-<módulo>.txt
-• Mensajes visibles en consola *sin* duplicarse.
-• La cabecera de versión se escribe solo en el archivo (nivel DEBUG),
-  de modo que nunca “ensucia” la salida en pantalla.
+Módulo de logging centralizado.
+
+Configura y proporciona funciones de logging consistentes.
 """
-from __future__ import annotations
 
 import logging
 import os
 from datetime import datetime
-from pathlib import Path
+from typing import cast
 
-# Ruta raíz para logs
-LOG_ROOT = Path(os.path.abspath(os.path.dirname(__file__))) / '..' / '.log'
-LOG_ROOT = LOG_ROOT.expanduser().resolve()
-LOG_ROOT.mkdir(parents=True, exist_ok=True)
-
-# Formato y datefmt
-_FMT = "%(asctime)s - %(levelname)s - %(message)s"
-_DATEFMT = "%Y-%m-%d %H:%M:%S"
-formatter = logging.Formatter(_FMT, datefmt=_DATEFMT)
+from core.config import ENCODING_DEFAULT, LOG_DIR, LOGGING_CONFIG
 
 
-def configurar_logger(nombre_modulo: str) -> logging.Logger:
+def configurar_logger(nombre: str, nivel: int = logging.INFO) -> logging.Logger:
     """
-    Configura (una sola vez) el logger raíz y devuelve la misma
-    instancia para cualquier módulo que la solicite.
+    Configura un logger con formato estandarizado.
+
+    Args:
+        nombre: Nombre del logger
+        nivel: Nivel de logging (default: INFO)
+
+    Returns:
+        logging.Logger: Logger configurado
     """
-    root = logging.getLogger()
+    logger = logging.getLogger(nombre)
+    logger.setLevel(nivel)
 
-    # Si ya hay handlers, devolvemos la instancia existente
-    if root.handlers:
-        return root
+    # Solo configurar si no tiene handlers
+    if not logger.handlers:
+        # Configurar handler de consola
+        console_handler = logging.StreamHandler()
+        console_handler.setFormatter(
+            logging.Formatter(
+                fmt=cast(str, LOGGING_CONFIG["format"]),
+                datefmt=cast(str, LOGGING_CONFIG["datefmt"]),
+            )
+        )
+        logger.addHandler(console_handler)
 
-    root.setLevel(logging.DEBUG)
+        # Configurar handler de archivo
+        if not LOG_DIR.exists():
+            os.makedirs(LOG_DIR, exist_ok=True)
 
-    # ---------- FileHandler -------------------------------------------------
-    ts = datetime.now().strftime("log-%m-%d-%H%M")
-    log_path = LOG_ROOT / f"{ts}-{nombre_modulo}.txt"
-    fh = logging.FileHandler(log_path, encoding="utf-8")
-    fh.setLevel(logging.DEBUG)
-    fh.setFormatter(formatter)
-    root.addHandler(fh)
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        log_file = LOG_DIR / f"log-{timestamp}-{nombre}.txt"
 
-    # ---------- ConsoleHandler ----------------------------------------------
-    ch = logging.StreamHandler()
-    ch.setLevel(logging.INFO)
-    ch.setFormatter(formatter)
-    root.addHandler(ch)
+        file_handler = logging.FileHandler(
+            log_file,
+            encoding=ENCODING_DEFAULT,
+        )
+        file_handler.setFormatter(
+            logging.Formatter(
+                fmt=cast(str, LOGGING_CONFIG["format"]),
+                datefmt=cast(str, LOGGING_CONFIG["datefmt"]),
+            )
+        )
+        logger.addHandler(file_handler)
 
-    # Reducir verbosity de librerías de terceros
-    for noisy in ("pdfminer", "pdfplumber", "PIL"):
-        logging.getLogger(noisy).setLevel(logging.ERROR)
+        # Silenciar loggers ruidosos
+        for noisy_logger in LOGGING_CONFIG["noisy_loggers"]:
+            logging.getLogger(noisy_logger).setLevel(logging.WARNING)
 
-    return root
+    return logger
 
 
-# ------------------------------------------------------------------ #
-# Wrappers “one-liner”                                               #
-# Llaman directamente al logger raíz y no crean handlers duplicados. #
-# ------------------------------------------------------------------ #
-def log_info(msg: str) -> None:
-    logging.getLogger().info(msg)
+def log_info(mensaje: str) -> None:
+    """Registra un mensaje de nivel INFO."""
+    logging.getLogger().info(mensaje)
 
-def log_warning(msg: str) -> None:
-    logging.getLogger().warning(msg)
 
-def log_error(msg: str) -> None:
-    logging.getLogger().error(msg)
+def log_warning(mensaje: str) -> None:
+    """Registra un mensaje de nivel WARNING."""
+    logging.getLogger().warning(mensaje)
+
+
+def log_error(mensaje: str) -> None:
+    """Registra un mensaje de nivel ERROR."""
+    logging.getLogger().error(mensaje)

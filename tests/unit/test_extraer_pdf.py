@@ -1,17 +1,24 @@
 # tests/test_extraer_pdf.py
 # tests/test_extraer_pdf.py
 import pytest
-pytest.skip("Omitiendo test de PDF extractor; revisaremos más tarde", allow_module_level=True)
+
+pytest.skip(
+    "Omitiendo test de PDF extractor; revisaremos más tarde", allow_module_level=True
+)
 
 # el resto del fichero queda intacto
 # from core.extraer_pdf import extraer_texto_desde_pdf
 # ...
 
-import os, tempfile, pytest
+import os
+import tempfile
+
+import pytest
 from reportlab.pdfgen import canvas
 
 from core.extraer_pdf import extraer_texto_desde_pdf
 from core.normalizador_recetas import parsear_ingredientes
+
 
 @pytest.fixture(scope="module")
 def pdf_receta_tmp():
@@ -27,6 +34,7 @@ def pdf_receta_tmp():
     c.save()
     yield tmp.name
     os.remove(tmp.name)
+
 
 def test_extraer_pdf_end_to_end(pdf_receta_tmp):
     texto = extraer_texto_desde_pdf(pdf_receta_tmp)
