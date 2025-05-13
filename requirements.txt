@@ -6,3 +6,4 @@ pdfplumber>=0.11.6
 pytest>=8.0.0
 coverage>=7.8.0
 reportlab>=4.0.0
+pytest-dotenv>=0.5.2

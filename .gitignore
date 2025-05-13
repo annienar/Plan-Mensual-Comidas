@@ -44,10 +44,10 @@ htmlcov/
 .log/
 *.sqlite3
 
-# Project specific - allow test recipe but ignore processed files
+# Project specific - track test files but ignore processed files
 recetas/procesadas/
-recetas/sin_procesar/*
-!recetas/sin_procesar/receta_compleja_para_test.txt
+# recetas/sin_procesar/*  # Commented out to track test files
+# !recetas/sin_procesar/receta_compleja_para_test.txt  # No longer needed
 
 # OS specific
 .DS_Store
