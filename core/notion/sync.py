@@ -5,11 +5,12 @@ Handles synchronization of recipes with Notion.
 """
 
 from typing import Any, Dict, List, Optional, cast
-
-from notion_client import Client
-
+from core.notion.client import NotionClient
+from core.notion.errors import NotionAPIError
 from core.recipe.models.recipe import Recipe
 from core.utils.logger import get_logger
+from core.notion.models import NotionPantryItem, NotionIngredient, NotionRecipe
+from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 
 logger = get_logger("notion.sync")
 
@@ -17,17 +18,18 @@ logger = get_logger("notion.sync")
 class NotionSync:
     """Handles recipe synchronization with Notion."""
 
-    def __init__(self, token: str, database_id: str) -> None:
+    def __init__(self, client: NotionClient, db_ids: dict) -> None:
         """
         Initialize Notion client.
 
         Args:
-            token: Notion integration token
-            database_id: ID of the recipes database
+            client: Notion client
+            db_ids: Dictionary containing database IDs
         """
-        self.token = token
-        self.database_id = database_id
-        self.client = Client(auth=token)
+        self.client = client
+        self.recipe_db = db_ids['Recetas']
+        self.ingredient_db = db_ids['Ingredientes']
+        self.pantry_db = db_ids['Alacena']
         self._test_page_ids: List[str] = []
 
     def check_connection(self) -> bool:
@@ -38,7 +40,7 @@ class NotionSync:
             bool: True if connection is successful
         """
         try:
-            self.client.users.me
+            self.client.client.users.me
             return True
         except Exception as e:
             logger.error(f"Failed to connect to Notion API: {e}")
@@ -52,7 +54,7 @@ class NotionSync:
             bool: True if database is accessible
         """
         try:
-            self.client.databases.retrieve(self.database_id)
+            self.client.client.databases.retrieve(self.recipe_db)
             return True
         except Exception as e:
             logger.error(f"Failed to access Notion database: {e}")
@@ -71,8 +73,8 @@ class NotionSync:
         try:
             response = cast(
                 Dict[str, Any],
-                self.client.databases.query(
-                    database_id=self.database_id,
+                self.client.client.databases.query(
+                    database_id=self.recipe_db,
                     filter={"property": "Nombre", "title": {"equals": recipe_name}},
                 ),
             )
@@ -84,7 +86,7 @@ class NotionSync:
             logger.error(f"Failed to check recipe existence: {e}")
             return None
 
-    def sync_recipe(self, recipe: Recipe) -> str:
+    def sync_recipe(self, recipe: NotionRecipe) -> str:
         """
         Synchronize a recipe with Notion.
 
@@ -95,51 +97,112 @@ class NotionSync:
             str: ID of the created/updated Notion page
 
         Raises:
-            Exception: If synchronization fails
+            NotionAPIError: If synchronization fails
         """
         # Check if recipe exists
-        existing_id = self._recipe_exists(recipe.name)
+        existing_id = self._recipe_exists(recipe.title)
 
-        # Prepare properties for Notion
+        # Prepare properties for Notion (Recetas Completas)
         properties = {
-            "Nombre": {"title": [{"text": {"content": recipe.name}}]},
-            "Fuente": {
-                "url": recipe.source_url if recipe.source_url != "Desconocido" else None
-            },
-            "Porciones": {
-                "number": recipe.servings if isinstance(recipe.servings, int) else None
-            },
-            "Ingredientes": {
-                "rich_text": [{"text": {"content": str(recipe.ingredients)}}]
-            },
-            "Preparación": {
-                "rich_text": [{"text": {"content": str(recipe.preparation_steps)}}]
-            },
+            "Nombre": {"title": [{"text": {"content": recipe.title}}]},
+            "Porciones": {"number": recipe.portions} if recipe.portions else None,
+            "Calorías": {"number": recipe.calories} if recipe.calories else None,
+            "Tags": {"multi_select": [{"name": tag} for tag in recipe.tags]} if recipe.tags else None,
         }
-
-        if recipe.calories:
-            properties["Calorías"] = {"number": recipe.calories}
+        # Add ingredient relations
+        if recipe.ingredient_ids:
+            properties["Ingredientes"] = {
+                "relation": [{"id": ing_id} for ing_id in recipe.ingredient_ids]
+            }
+        # Remove None values
+        properties = {k: v for k, v in properties.items() if v is not None}
 
         try:
             if existing_id:
-                # Update existing page
                 response = cast(
                     Dict[str, Any],
-                    self.client.pages.update(page_id=existing_id, properties=properties),
+                    self.client.client.pages.update(page_id=existing_id, properties=properties),
                 )
             else:
-                # Create new page
                 response = cast(
                     Dict[str, Any],
-                    self.client.pages.create(
-                        parent={"database_id": self.database_id}, properties=properties
+                    self.client.client.pages.create(
+                        parent={"database_id": self.recipe_db}, properties=properties
                     ),
                 )
-
             return cast(str, response["id"])
         except Exception as e:
-            logger.error(f"Failed to sync recipe {recipe.name}: {e}")
-            raise
+            logger.error(f"Failed to sync recipe {recipe.title}: {e}")
+            raise NotionAPIError(f"Failed to sync recipe {recipe.title}: {e}")
+
+    @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=2, max=10), retry=retry_if_exception_type((NotionAPIError, ConnectionError)))
+    def sync_ingredient(self, ingredient: NotionIngredient) -> str:
+        """
+        Synchronize an ingredient with Notion (Ingredientes DB).
+
+        Args:
+            ingredient: Ingredient to synchronize
+
+        Returns:
+            str: ID of the created/updated Notion page
+
+        Raises:
+            NotionAPIError: If synchronization fails
+        """
+        try:
+            # Prepare properties for Notion (Ingredientes)
+            properties = {
+                "Ingrediente": {"relation": [{"id": ingredient.pantry_id}]} if ingredient.pantry_id else None,
+                "Cantidad Usada": {"title": [{"text": {"content": str(ingredient.quantity) if ingredient.quantity else ""}}]},
+                "Unidad": {"rich_text": [{"text": {"content": ingredient.unit or ""}}]},
+            }
+            # Remove None values
+            properties = {k: v for k, v in properties.items() if v is not None}
+            response = cast(
+                Dict[str, Any],
+                self.client.client.pages.create(
+                    parent={"database_id": self.ingredient_db}, properties=properties
+                ),
+            )
+            return cast(str, response["id"])
+        except Exception as e:
+            logger.error(f"Failed to sync ingredient {ingredient.name}: {e}")
+            raise NotionAPIError(f"Failed to sync ingredient {ingredient.name}: {e}")
+
+    @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=2, max=10), retry=retry_if_exception_type((NotionAPIError, ConnectionError)))
+    def sync_pantry_item(self, pantry_item: NotionPantryItem) -> str:
+        """
+        Synchronize a pantry item with Notion (Alacena DB).
+
+        Args:
+            pantry_item: Pantry item to synchronize
+
+        Returns:
+            str: ID of the created/updated Notion page
+
+        Raises:
+            NotionAPIError: If synchronization fails
+        """
+        try:
+            # Prepare properties for Notion (Alacena)
+            properties = {
+                "Nombre": {"title": [{"text": {"content": pantry_item.name}}]},
+                "Categoría": {"select": {"name": pantry_item.category}} if pantry_item.category else None,
+                "Stock alacena": {"number": pantry_item.stock} if pantry_item.stock is not None else None,
+                "Unidad": {"select": {"name": pantry_item.unit}} if pantry_item.unit else None,
+            }
+            # Remove None values
+            properties = {k: v for k, v in properties.items() if v is not None}
+            response = cast(
+                Dict[str, Any],
+                self.client.client.pages.create(
+                    parent={"database_id": self.pantry_db}, properties=properties
+                ),
+            )
+            return cast(str, response["id"])
+        except Exception as e:
+            logger.error(f"Failed to sync pantry item {pantry_item.name}: {e}")
+            raise NotionAPIError(f"Failed to sync pantry item {pantry_item.name}: {e}")
 
     def get_recipe(self, page_id: str) -> Dict[str, Any]:
         """
@@ -152,13 +215,13 @@ class NotionSync:
             Dict[str, Any]: Recipe data
 
         Raises:
-            Exception: If retrieval fails
+            NotionAPIError: If retrieval fails
         """
         try:
-            return cast(Dict[str, Any], self.client.pages.retrieve(page_id))
+            return cast(Dict[str, Any], self.client.client.pages.retrieve(page_id))
         except Exception as e:
             logger.error(f"Failed to get recipe {page_id}: {e}")
-            raise
+            raise NotionAPIError(f"Failed to get recipe {page_id}: {e}")
 
     def sync_all_recipes(self, recipes: List[Recipe]) -> List[Dict[str, Any]]:
         """
@@ -187,10 +250,10 @@ class NotionSync:
             page_id: ID of the page to delete
 
         Raises:
-            Exception: If deletion fails
+            NotionAPIError: If deletion fails
         """
         try:
-            self.client.pages.update(page_id=page_id, archived=True)
+            self.client.client.pages.update(page_id=page_id, archived=True)
         except Exception as e:
             logger.error(f"Failed to delete recipe {page_id}: {e}")
-            raise 
+            raise NotionAPIError(f"Failed to delete recipe {page_id}: {e}") 

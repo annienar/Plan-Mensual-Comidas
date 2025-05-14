@@ -1,117 +1,85 @@
 """
 Command-line interface for the Recipe Management System.
 
-Provides a CLI for processing recipes and generating documents.
+Provides a CLI for processing recipes and generating documents using Click.
 """
 
-import argparse
-import sys
+import os
+from dotenv import load_dotenv
+load_dotenv()
+import click
+import shutil
 from pathlib import Path
-
-import pytest
-
-from core.recipe.generators.markdown import generate_all_markdown
 from core.recipe.processor import RecipeProcessor
-from core.utils.config import (
-    JSON_RECIPES_DIR,
-    MD_RECIPES_DIR,
-    PROJECT_NAME,
-    UNPROCESSED_DIR,
-    VERSION,
-)
-from core.utils.logger import get_logger, log_error, log_info
+from core.notion.client import NotionClient
+from core.notion.sync import NotionSync
+from core.notion.models import NotionRecipe, NotionIngredient, NotionPantryItem
+from core.utils.logger import get_logger
+import asyncio
+
+SIN_PROCESAR = Path("recetas/sin_procesar")
+PROCESADAS = Path("recetas/procesadas")
+# ERRORES = Path("recetas/errores")  # Optional: create if you want to move failed files
 
 logger = get_logger("cli")
 
+@click.group()
+def cli():
+    """Recipe Management CLI (Click-based)."""
+    pass
 
-def process_recipes() -> bool:
-    """
-    Process all unprocessed recipes.
+@cli.command()
+def process_recipes():
+    """Process all recipes in 'recetas/sin_procesar' and sync to Notion."""
+    files = list(SIN_PROCESAR.glob("*"))
+    if not files:
+        click.echo("No files to process in 'recetas/sin_procesar'.")
+        return
 
-    Returns:
-        bool: True if processing was successful
-    """
+    # Setup Notion sync
+    notion_token = os.getenv("NOTION_TOKEN")
+    db_ids = {
+        "Recetas": os.getenv("NOTION_RECETAS_DB"),
+        "Ingredientes": os.getenv("NOTION_INGREDIENTES_DB"),
+        "Alacena": os.getenv("NOTION_ALACENA_DB"),
+    }
+    
+    # Debug: Print database IDs
+    click.echo("Using database IDs:")
+    for db_name, db_id in db_ids.items():
+        click.echo(f"  {db_name}: {db_id}")
+    
+    notion_client = NotionClient(token=notion_token)
+    notion_sync = NotionSync(notion_client, db_ids)
     processor = RecipeProcessor()
-    return processor.process_directory(UNPROCESSED_DIR)
 
-
-def main() -> None:
-    """Main CLI entry point."""
-    parser = argparse.ArgumentParser(
-        prog=PROJECT_NAME.lower().replace(" ", "-"),
-        description=f"{PROJECT_NAME} v{VERSION}",
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="""
-Examples:
-  %(prog)s --process                    # Process all new files
-  %(prog)s --generate-md               # Generate Markdown from existing JSONs
-  %(prog)s --process --generate-md     # Complete workflow
-  %(prog)s --test                      # Run tests
-  %(prog)s --version                   # Show version
-        """,
-    )
-
-    parser.add_argument(
-        "--process",
-        action="store_true",
-        help="Process all files in recipes/unprocessed/",
-    )
-    parser.add_argument(
-        "--generate-md",
-        action="store_true",
-        help="Generate .md files in recipes/processed/Recetas MD/",
-    )
-    parser.add_argument(
-        "--test",
-        action="store_true",
-        help="Run the test suite with pytest",
-    )
-    parser.add_argument(
-        "--version",
-        action="version",
-        version=f"%(prog)s {VERSION}",
-        help="Show program version",
-    )
-    parser.add_argument(
-        "--verbose",
-        "-v",
-        action="count",
-        default=0,
-        help="Increase verbosity of output",
-    )
-
-    args = parser.parse_args()
-
-    # Show help if no flags provided
-    if not any([args.process, args.generate_md, args.test]):
-        parser.print_help()
-        sys.exit(0)
-
-    exit_code = 0
-    try:
-        # Process files
-        if args.process and not process_recipes():
-            exit_code = 1
-
-        # Generate Markdown
-        if args.generate_md and not generate_all_markdown(JSON_RECIPES_DIR, MD_RECIPES_DIR):
-            exit_code = 1
-
-        # Run tests
-        if args.test:
-            test_args = ["-v"] if args.verbose else ["-q"]
-            test_args.extend(["--maxfail=1"])
-            exit_code = pytest.main(test_args)
-
-    except KeyboardInterrupt:
-        log_info("\n⚠️ Operation interrupted by user")
-        exit_code = 130
-    except Exception as e:
-        log_error(f"❌ Unexpected error: {e}")
-        exit_code = 1
-
-    sys.exit(exit_code)
-
+    for file in files:
+        try:
+            click.echo(f"Processing: {file.name}")
+            # 1. Extract and process recipe (async)
+            content = file.read_text(encoding="utf-8")
+            recipe_obj = asyncio.run(processor.process_recipe(content))
+            # 2. Sync pantry items and ingredients
+            pantry_ids = {}
+            ingredient_ids = []
+            for ing in recipe_obj.ingredients:
+                pantry_item = NotionPantryItem(name=ing.name)  # Add more fields as needed
+                pantry_id = notion_sync.sync_pantry_item(pantry_item)
+                pantry_ids[ing.name] = pantry_id
+                ingredient = NotionIngredient(name=ing.name, pantry_id=pantry_id)
+                ingredient_id = notion_sync.sync_ingredient(ingredient)
+                ingredient_ids.append(ingredient_id)
+            # 3. Sync recipe, link to ingredients
+            notion_recipe = NotionRecipe(title=recipe_obj.title, ingredient_ids=ingredient_ids)
+            notion_sync.sync_recipe(notion_recipe)
+            # 4. Ensure processed directory exists and move file
+            PROCESADAS.mkdir(parents=True, exist_ok=True)
+            shutil.move(str(file), PROCESADAS / file.name)
+            click.secho(f"SUCCESS: {file.name} processed and moved.", fg="green")
+        except Exception as e:
+            logger.error(f"Failed to process {file.name}: {e}")
+            click.secho(f"ERROR: Failed to process {file.name}: {e}", fg="red")
+            # Optionally move to ERRORES / file.name
 
 if __name__ == "__main__":
-    main() 
+    cli() 
