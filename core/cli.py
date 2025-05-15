@@ -17,136 +17,167 @@ from core.notion.models import NotionRecipe, NotionIngredient, NotionPantryItem
 from core.utils.logger import get_logger
 import asyncio
 import time
+from typing import List, Dict, Any
+from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 
 SIN_PROCESAR = Path("recetas/sin_procesar")
 PROCESADAS = Path("recetas/procesadas")
-# ERRORES = Path("recetas/errores")  # Optional: create if you want to move failed files
+ERRORES = Path("recetas/errores")
 
 logger = get_logger("cli")
+
+def validate_env_vars() -> Dict[str, str]:
+    """Validate required environment variables."""
+    required_vars = {
+        "NOTION_TOKEN": os.getenv("NOTION_TOKEN"),
+        "NOTION_RECETAS_DB": os.getenv("NOTION_RECETAS_DB"),
+        "NOTION_INGREDIENTES_DB": os.getenv("NOTION_INGREDIENTES_DB"),
+        "NOTION_ALACENA_DB": os.getenv("NOTION_ALACENA_DB"),
+    }
+    missing = [var for var, value in required_vars.items() if not value]
+    if missing:
+        raise click.ClickException(f"Missing required environment variables: {', '.join(missing)}")
+    return {
+        "Recetas": required_vars["NOTION_RECETAS_DB"],
+        "Ingredientes": required_vars["NOTION_INGREDIENTES_DB"],
+        "Alacena": required_vars["NOTION_ALACENA_DB"],
+    }
 
 @click.group()
 def cli():
     """Recipe Management CLI (Click-based)."""
     pass
 
+@retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=2, max=10))
+async def process_single_recipe(file: Path, notion_sync: NotionSync, processor: RecipeProcessor, progress_bar) -> bool:
+    """Process a single recipe file with retry logic."""
+    try:
+        progress_bar.update(1, f"Processing: {file.name}")
+        recipe_start_time = time.time()
+        timing_info = {}
+        
+        # 1. Extract and process recipe
+        extract_start = time.time()
+        content = file.read_text(encoding="utf-8")
+        recipe_obj = await processor.process_recipe(content)
+        timing_info['extraction'] = time.time() - extract_start
+        
+        # 2. Sync pantry items and ingredients
+        pantry_start = time.time()
+        pantry_ids = {}
+        ingredient_row_ids = []
+        for ing in recipe_obj.ingredients:
+            pantry_item = NotionPantryItem(name=ing.name)
+            pantry_id = await notion_sync.sync_pantry_item(pantry_item)
+            pantry_ids[ing.name] = pantry_id
+            
+            ingredient = NotionIngredient(
+                name=ing.name,
+                pantry_id=pantry_id,
+                quantity=ing.quantity,
+                unit=ing.unit
+            )
+            ingredient_row_id = await notion_sync.sync_ingredient(ingredient)
+            ingredient_row_ids.append(ingredient_row_id)
+            await asyncio.sleep(0.1)  # Rate limiting
+        timing_info['pantry_sync'] = time.time() - pantry_start
+        
+        # 3. Sync recipe
+        recipe_sync_start = time.time()
+        notion_recipe = NotionRecipe(
+            title=recipe_obj.metadata.title,
+            ingredient_ids=ingredient_row_ids,
+            portions=recipe_obj.metadata.porciones,
+            calories=recipe_obj.metadata.calorias,
+            tags=recipe_obj.metadata.tags,
+            tipo=recipe_obj.metadata.tipo,
+            hecho=recipe_obj.metadata.hecho,
+            date=recipe_obj.metadata.date,
+            dificultad=recipe_obj.metadata.dificultad,
+            tiempo_preparacion=recipe_obj.metadata.tiempo_preparacion,
+            tiempo_coccion=recipe_obj.metadata.tiempo_coccion,
+            tiempo_total=recipe_obj.metadata.tiempo_total,
+            notas=recipe_obj.metadata.notas,
+            url=recipe_obj.metadata.url,
+            ingredients=recipe_obj.ingredients,
+            instructions=recipe_obj.instructions,
+        )
+        recipe_page_id = await notion_sync.sync_recipe(notion_recipe)
+        timing_info['recipe_sync'] = time.time() - recipe_sync_start
+        
+        # 4. Update ingredient relations
+        relations_start = time.time()
+        for ingredient_row_id in ingredient_row_ids:
+            await notion_sync.update_ingredient_with_recipe(ingredient_row_id, recipe_page_id)
+            await asyncio.sleep(0.1)  # Rate limiting
+        timing_info['relations_update'] = time.time() - relations_start
+        
+        # 5. Move processed file
+        move_start = time.time()
+        PROCESADAS.mkdir(parents=True, exist_ok=True)
+        shutil.move(str(file), PROCESADAS / file.name)
+        timing_info['file_move'] = time.time() - move_start
+        
+        total_time = time.time() - recipe_start_time
+        timing_summary = ", ".join([f"{k}: {v:.2f}s" for k, v in timing_info.items()])
+        progress_bar.update(1, f"SUCCESS: {file.name} processed in {total_time:.2f}s ({timing_summary})")
+        return True
+        
+    except Exception as e:
+        logger.error(f"Failed to process {file.name}: {e}")
+        ERRORES.mkdir(parents=True, exist_ok=True)
+        shutil.move(str(file), ERRORES / file.name)
+        progress_bar.update(1, f"ERROR: {file.name} failed: {str(e)}")
+        return False
+
 @cli.command()
-def process_recipes():
-    """Process all recipes in 'recetas/sin_procesar' and sync to Notion."""
+@click.option('--concurrency', default=3, help='Number of concurrent recipe processing tasks')
+def process_recipes(concurrency: int):
+    """Process all recipes in the sin_procesar directory."""
     files = list(SIN_PROCESAR.glob("*"))
     if not files:
         click.echo("No files to process in 'recetas/sin_procesar'.")
         return
 
-    # Setup Notion sync
-    notion_token = os.getenv("NOTION_TOKEN")
-    db_ids = {
-        "Recetas": os.getenv("NOTION_RECETAS_DB"),
-        "Ingredientes": os.getenv("NOTION_INGREDIENTES_DB"),
-        "Alacena": os.getenv("NOTION_ALACENA_DB"),
-    }
+    try:
+        db_ids = validate_env_vars()
+    except click.ClickException as e:
+        click.echo(str(e), err=True)
+        return
+
+    async def process_all_recipes():
+        async with NotionClient() as notion_client:
+            notion_sync = NotionSync(notion_client, db_ids)
+            processor = RecipeProcessor()
+            semaphore = asyncio.Semaphore(concurrency)
+            
+            with click.progressbar(length=len(files), label="Processing recipes") as progress_bar:
+                async def process_with_semaphore(file):
+                    async with semaphore:
+                        return await process_single_recipe(file, notion_sync, processor, progress_bar)
+                
+                tasks = [process_with_semaphore(file) for file in files]
+                results = await asyncio.gather(*tasks)
+                
+                success_count = sum(1 for r in results if r)
+                click.echo(f"\nProcessed {len(files)} recipes: {success_count} successful, {len(files) - success_count} failed")
+
+    asyncio.run(process_all_recipes())
+
+@cli.command()
+def list_recipes():
+    """List all recipes in the system."""
+    click.echo("Unprocessed recipes:")
+    for file in SIN_PROCESAR.glob("*"):
+        click.echo(f"  {file.name}")
     
-    # Debug: Print database IDs
-    click.echo("Using database IDs:")
-    for db_name, db_id in db_ids.items():
-        click.echo(f"  {db_name}: {db_id}")
+    click.echo("\nProcessed recipes:")
+    for file in PROCESADAS.glob("*"):
+        click.echo(f"  {file.name}")
     
-    notion_client = NotionClient(token=notion_token)
-    notion_sync = NotionSync(notion_client, db_ids)
-    processor = RecipeProcessor()
-
-    for file in files:
-        try:
-            click.echo(f"Processing: {file.name}")
-            recipe_start_time = time.time()
-            # 1. Extract and process recipe (async)
-            extract_start = time.time()
-            content = file.read_text(encoding="utf-8")
-            recipe_obj = asyncio.run(processor.process_recipe(content))
-            extract_time = time.time() - extract_start
-            click.echo(f"  Extraction & parsing took {extract_time:.2f} seconds")
-
-            # 2. Sync pantry items and ingredients
-            sync_ingredients_start = time.time()
-            pantry_ids = {}
-            ingredient_row_ids = []  # IDs of Ingredientes DB rows
-            for ing in recipe_obj.ingredients:
-                logger.info(f"Processing ingredient: {ing.name}")
-                logger.info(f"  Raw quantity: {ing.quantity}")
-                logger.info(f"  Raw unit: {ing.unit}")
-                
-                pantry_item = NotionPantryItem(name=ing.name)  # Add more fields as needed
-                pantry_id = notion_sync.sync_pantry_item(pantry_item)
-                pantry_ids[ing.name] = pantry_id
-                
-                ingredient = NotionIngredient(
-                    name=ing.name,
-                    pantry_id=pantry_id,
-                    quantity=ing.quantity,
-                    unit=ing.unit
-                )
-                logger.info(f"Created NotionIngredient object:")
-                logger.info(f"  Name: {ingredient.name}")
-                logger.info(f"  Quantity: {ingredient.quantity}")
-                logger.info(f"  Unit: {ingredient.unit}")
-                logger.info(f"  Pantry ID: {ingredient.pantry_id}")
-                
-                ing_sync_start = time.time()
-                ingredient_row_id = notion_sync.sync_ingredient(ingredient)
-                ing_sync_time = time.time() - ing_sync_start
-                click.echo(f"    Synced ingredient '{ing.name}' in {ing_sync_time:.2f} seconds")
-                ingredient_row_ids.append(ingredient_row_id)
-                time.sleep(1)  # Wait for Notion to index the ingredient page
-
-            sync_ingredients_time = time.time() - sync_ingredients_start
-            click.echo(f"  Ingredient sync took {sync_ingredients_time:.2f} seconds")
-
-            # 3. Sync recipe, link to ingredient rows (not pantry items)
-            time.sleep(2)  # Wait for Notion to index all ingredient rows
-            meta = recipe_obj.metadata
-            notion_recipe = NotionRecipe(
-                title=meta.title,
-                ingredient_ids=ingredient_row_ids,  # Use ingredient row IDs
-                portions=meta.porciones,
-                calories=meta.calorias,
-                tags=meta.tags,
-                tipo=meta.tipo,
-                hecho=meta.hecho,
-                date=meta.date,
-                dificultad=meta.dificultad,
-                tiempo_preparacion=meta.tiempo_preparacion,
-                tiempo_coccion=meta.tiempo_coccion,
-                tiempo_total=meta.tiempo_total,
-                notas=meta.notas,
-                url=meta.url,
-                ingredients=recipe_obj.ingredients,  # Pass the full ingredient objects
-                instructions=recipe_obj.instructions,  # Pass the preparation steps
-            )
-            recipe_sync_start = time.time()
-            recipe_page_id = notion_sync.sync_recipe(notion_recipe)
-            recipe_sync_time = time.time() - recipe_sync_start
-            click.echo(f"  Recipe sync took {recipe_sync_time:.2f} seconds")
-            time.sleep(2)  # Wait for Notion to index the recipe page
-
-            # 4. Update each ingredient row with the recipe relation
-            update_ingredient_start = time.time()
-            for ingredient_row_id in ingredient_row_ids:
-                rel_sync_start = time.time()
-                notion_sync.update_ingredient_with_recipe(ingredient_row_id, recipe_page_id)
-                rel_sync_time = time.time() - rel_sync_start
-                click.echo(f"    Updated ingredient relation in {rel_sync_time:.2f} seconds")
-                time.sleep(1)  # Wait for Notion to index each update
-            update_ingredient_time = time.time() - update_ingredient_start
-            click.echo(f"  Ingredient relation updates took {update_ingredient_time:.2f} seconds")
-
-            # 5. Ensure processed directory exists and move file
-            PROCESADAS.mkdir(parents=True, exist_ok=True)
-            shutil.move(str(file), PROCESADAS / file.name)
-            total_recipe_time = time.time() - recipe_start_time
-            click.secho(f"SUCCESS: {file.name} processed and moved in {total_recipe_time:.2f} seconds.", fg="green")
-        except Exception as e:
-            logger.error(f"Failed to process {file.name}: {e}")
-            click.secho(f"ERROR: Failed to process {file.name}: {e}", fg="red")
-            # Optionally move to ERRORES / file.name
+    click.echo("\nFailed recipes:")
+    for file in ERRORES.glob("*"):
+        click.echo(f"  {file.name}")
 
 if __name__ == "__main__":
-    cli() 
+    cli()
