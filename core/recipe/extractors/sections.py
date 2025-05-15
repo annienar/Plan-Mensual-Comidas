@@ -13,15 +13,17 @@ class SectionExtractor(BaseExtractor):
         lines = [l.strip() for l in content.splitlines()]
         current = None
         for line in lines:
-            if re.match(r"^ingredientes\b", line, re.IGNORECASE):
+            # Section headers
+            if re.match(r"^(ingredientes|ingredients)\b", line, re.IGNORECASE):
                 current = 'ingredients'
                 continue
-            elif re.match(r"^(pasos?|preparaci[oó]n|paso a paso)", line, re.IGNORECASE):
+            elif re.match(r"^(pasos?|preparaci[oó]n|steps?|instructions?)", line, re.IGNORECASE):
                 current = 'instructions'
                 continue
-            elif re.match(r"^(notas?|tips?)", line, re.IGNORECASE):
+            elif re.match(r"^(notas?|tips?|notes?)", line, re.IGNORECASE):
                 current = 'notes'
                 continue
-            if current and line:
+            # Only add lines to the current section if not a section header
+            if current and line and not re.match(r"^(ingredientes|ingredients|pasos?|preparaci[oó]n|steps?|instructions?|notas?|tips?|notes?)\b", line, re.IGNORECASE):
                 sections[current].append(line)
         return sections 

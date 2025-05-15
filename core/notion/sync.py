@@ -11,6 +11,7 @@ from core.recipe.models.recipe import Recipe
 from core.utils.logger import get_logger
 from core.notion.models import NotionPantryItem, NotionIngredient, NotionRecipe
 from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
+from core.recipe.generators.notion_blocks import recipe_to_notion_blocks
 
 logger = get_logger("notion.sync")
 
@@ -105,17 +106,30 @@ class NotionSync:
         # Prepare properties for Notion (Recetas Completas)
         properties = {
             "Nombre": {"title": [{"text": {"content": recipe.title}}]},
-            "Porciones": {"number": recipe.portions} if recipe.portions else None,
-            "Calorías": {"number": recipe.calories} if recipe.calories else None,
+            "Porciones": {"number": recipe.portions} if recipe.portions is not None else None,
+            "Calorías": {"number": recipe.calories} if recipe.calories is not None else None,
             "Tags": {"multi_select": [{"name": tag} for tag in recipe.tags]} if recipe.tags else None,
+            "Tipo": {"select": {"name": recipe.tipo}} if recipe.tipo else None,
+            "Hecho": {"checkbox": recipe.hecho} if recipe.hecho is not None else None,
+            "Date": {"date": {"start": recipe.date}} if recipe.date else None,
+            "Dificultad": {"select": {"name": recipe.dificultad}} if recipe.dificultad else None,
+            "Notas": {"rich_text": [{"text": {"content": recipe.notas}}]} if recipe.notas else None,
+            "Tiempo preparación": {"number": recipe.tiempo_preparacion} if recipe.tiempo_preparacion is not None else None,
+            "Tiempo cocción": {"number": recipe.tiempo_coccion} if recipe.tiempo_coccion is not None else None,
+            "Tiempo total": {"number": recipe.tiempo_total} if recipe.tiempo_total is not None else None,
+            "URL": {"url": recipe.url} if recipe.url else None,
         }
-        # Add ingredient relations
+        # Add ingredient relations (to Ingredientes DB rows)
         if recipe.ingredient_ids:
+            print("Setting Ingredientes relation with IDs:", recipe.ingredient_ids)
             properties["Ingredientes"] = {
                 "relation": [{"id": ing_id} for ing_id in recipe.ingredient_ids]
             }
         # Remove None values
         properties = {k: v for k, v in properties.items() if v is not None}
+
+        # Log the properties being sent to Notion
+        logger.info(f"Syncing recipe '{recipe.title}' with properties: {properties}")
 
         try:
             if existing_id:
@@ -123,6 +137,7 @@ class NotionSync:
                     Dict[str, Any],
                     self.client.client.pages.update(page_id=existing_id, properties=properties),
                 )
+                page_id = existing_id
             else:
                 response = cast(
                     Dict[str, Any],
@@ -130,7 +145,14 @@ class NotionSync:
                         parent={"database_id": self.recipe_db}, properties=properties
                     ),
                 )
-            return cast(str, response["id"])
+                page_id = cast(str, response["id"])
+
+            # Add formatted content blocks to the recipe page
+            blocks = recipe_to_notion_blocks(recipe)
+            if blocks:
+                self.client.client.blocks.children.append(page_id=page_id, children=blocks)
+
+            return page_id
         except Exception as e:
             logger.error(f"Failed to sync recipe {recipe.title}: {e}")
             raise NotionAPIError(f"Failed to sync recipe {recipe.title}: {e}")
@@ -150,21 +172,45 @@ class NotionSync:
             NotionAPIError: If synchronization fails
         """
         try:
-            # Prepare properties for Notion (Ingredientes)
+            # Log the ingredient data being synced
+            logger.info(f"Syncing ingredient: {ingredient.name}")
+            logger.info(f"  Quantity: {ingredient.quantity}")
+            logger.info(f"  Unit: {ingredient.unit}")
+            logger.info(f"  Pantry ID: {ingredient.pantry_id}")
+            logger.info(f"  Recipe ID: {ingredient.receta_id}")
+
+            # Set title to just the quantity
             properties = {
+                "Cantidad Usada": {
+                    "title": [{
+                        "text": {
+                            "content": (
+                                str(int(ingredient.quantity)) if ingredient.quantity is not None and float(ingredient.quantity).is_integer()
+                                else str(ingredient.quantity) if ingredient.quantity is not None
+                                else ""
+                            )
+                        }
+                    }]
+                },
                 "Ingrediente": {"relation": [{"id": ingredient.pantry_id}]} if ingredient.pantry_id else None,
-                "Cantidad Usada": {"title": [{"text": {"content": str(ingredient.quantity) if ingredient.quantity else ""}}]},
-                "Unidad": {"rich_text": [{"text": {"content": ingredient.unit or ""}}]},
+                "Unidad": {"rich_text": [{"text": {"content": ingredient.unit or ''}}]},
+                "Receta": {"relation": [{"id": ingredient.receta_id}]} if ingredient.receta_id else None,
             }
             # Remove None values
             properties = {k: v for k, v in properties.items() if v is not None}
+
+            # Log the properties being sent to Notion
+            logger.info(f"Sending properties to Notion: {properties}")
+
             response = cast(
                 Dict[str, Any],
                 self.client.client.pages.create(
                     parent={"database_id": self.ingredient_db}, properties=properties
                 ),
             )
-            return cast(str, response["id"])
+            page_id = cast(str, response["id"])
+            logger.info(f"Created ingredient page with ID: {page_id}")
+            return page_id
         except Exception as e:
             logger.error(f"Failed to sync ingredient {ingredient.name}: {e}")
             raise NotionAPIError(f"Failed to sync ingredient {ingredient.name}: {e}")
@@ -256,4 +302,17 @@ class NotionSync:
             self.client.client.pages.update(page_id=page_id, archived=True)
         except Exception as e:
             logger.error(f"Failed to delete recipe {page_id}: {e}")
-            raise NotionAPIError(f"Failed to delete recipe {page_id}: {e}") 
+            raise NotionAPIError(f"Failed to delete recipe {page_id}: {e}")
+
+    def update_ingredient_with_recipe(self, ingredient_id: str, recipe_id: str) -> None:
+        """
+        Update an ingredient page in Notion to set the Receta relation.
+        """
+        try:
+            properties = {
+                "📚 Recetas Completas": {"relation": [{"id": recipe_id}]}
+            }
+            self.client.client.pages.update(page_id=ingredient_id, properties=properties)
+        except Exception as e:
+            logger.error(f"Failed to update ingredient {ingredient_id} with recipe {recipe_id}: {e}")
+            raise NotionAPIError(f"Failed to update ingredient {ingredient_id} with recipe {recipe_id}: {e}") 

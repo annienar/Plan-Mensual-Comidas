@@ -1,5 +1,7 @@
 Monthly Meal Plan — Technical Documentation
 
+[See Notion Refactor Plan for current issues and troubleshooting.](notion-refactor.md)
+
 Table of Contents
 
 1. Overview
@@ -2894,3 +2896,366 @@ Additional Language Considerations:
         # Run the application
         CMD ["python", "main.py"]
         ```
+
+## Notion DB Schema Table
+| DB         | Property Name      | Type        | Relation Target      | Notes                |
+|------------|-------------------|-------------|---------------------|----------------------|
+| Recetas    | Ingredientes       | Relation    | Ingredientes DB     | Must match exactly   |
+| Recetas    | Nombre             | Title       | —                   | Recipe name          |
+| Recetas    | Porciones          | Number      | —                   |                      |
+| Recetas    | Calorías           | Number      | —                   |                      |
+| Recetas    | Tipo               | Select      | —                   |                      |
+| Recetas    | Tags               | Multi-select| —                   |                      |
+| Recetas    | Hecho              | Checkbox    | —                   |                      |
+| Recetas    | Date               | Date        | —                   |                      |
+| Ingredientes | Cantidad Usada   | Title       | —                   | Only quantity        |
+| Ingredientes | Unidad           | Text        | —                   |                      |
+| Ingredientes | Ingrediente      | Relation    | Alacena DB          |                      |
+| Ingredientes | Receta           | Relation    | Recetas DB          |                      |
+| Alacena    | Nombre             | Title       | —                   | Pantry item name     |
+| Alacena    | Categoría          | Select      | —                   |                      |
+| Alacena    | Stock alacena      | Number      | —                   |                      |
+| Alacena    | Unidad             | Select      | —                   |                      |
+
+## End-to-End Example Workflow
+1. Add `recetas/sin_procesar/pasta.txt`:
+   ```
+   Pasta con Albóndigas
+   Ingredientes:
+   200 g pasta
+   1 huevo
+   ...
+   ```
+2. Run: `python -m core.cli process-recipes`
+3. In Notion:
+   - Recetas DB: New row "Pasta con Albóndigas" with 2 linked ingredients.
+   - Ingredientes DB: Rows for "200" (pasta), "1" (huevo), each linked to Alacena and Recetas.
+
+## Data Flow Diagram
+```mermaid
+graph TD
+    A[Recipe File] --> B[Text Extraction]
+    B --> C[Ingredient Extraction]
+    C --> D[Ingredient Normalization]
+    D --> E[Notion Sync]
+    E --> F[Recetas DB]
+    E --> G[Ingredientes DB]
+    E --> H[Alacena DB]
+    F --> I[User Review]
+    G --> I
+    H --> I
+```
+
+## Known Issues Table
+| Issue                        | Status      | Workaround/Notes                |
+|------------------------------|-------------|---------------------------------|
+| Unidad not always extracted  | Open        | Improve regex, manual edit      |
+| Ingredientes relation empty  | Open        | Manual link, check property     |
+| "New page" in Ingredientes   | Fixed       | Set title on create             |
+
+## Glossary/Terminology
+- **Alacena:** Pantry/master ingredient list.
+- **Ingredientes DB:** Per-recipe ingredient usage.
+- **Rollup:** Notion property aggregating related data.
+- **Cantidad Usada:** Title property in Ingredientes DB, only the quantity.
+- **Relation:** Notion property linking to another database.
+- **Title property:** The main text column in a Notion database.
+
+## API/Integration Versioning
+- **Notion API Version:** 2024-03-01 (update as needed)
+- **Breaking changes:** Track in notion-refactor.md and update integration accordingly.
+
+## User/UX Documentation
+- **How to add a recipe:** Place a text file in `recetas/sin_procesar/` and run the CLI.
+- **How to check results:** Open Notion, check Recetas, Ingredientes, and Alacena DBs for new/updated rows.
+- **How to fix issues:** See troubleshooting table and notion-refactor.md for common problems and solutions.
+
+## Future-Proofing and Extensibility
+- **Scaling:** Batch processing, multi-user support, async Notion sync.
+- **New features:** Nutrition analysis, substitutions, multi-language, calendar integration.
+- **Extending schema:** Add new properties to Notion DBs and update property mapping tables and sync logic accordingly.
+
+### Notion Recipe Page Formatting (Automated Blocks)
+
+When a recipe is synced to Notion, the system now automatically generates a well-formatted Notion page using content blocks. This is handled by the `recipe_to_notion_blocks` function, which converts parsed recipe data into a list of Notion API blocks. These blocks are then appended to the recipe page after creation, resulting in a clear, readable layout.
+
+**Features:**
+- Title as a heading
+- Metadata (portions, calories, difficulty, times) as a paragraph
+- Ingredients as a bulleted list (with optional flag)
+- Preparation steps as a numbered list
+- Notes as a section (if present)
+- (Optional) Additional tables for calories, variations, etc.
+
+**Example Notion Page Structure:**
+
+```
+# 🥘 Nombre de la Receta
+
+Porciones: 2  
+Calorías: 405 kcal  
+Dificultad: Fácil  
+Tiempo de preparación: 15 min  
+Tiempo de cocción: 10 min  
+Tiempo total: 25 min  
+
+## 🧾 Ingredientes
+- 1 unidad Banana madura
+- 1 unidad Huevo
+- 50 gramos Avena arrollada fina
+- 1 cucharadita Polvo de hornear
+- 1 cucharadita Esencia de vainilla
+- 30 ml Leche entera
+- 1 cucharadita Aceite (para cocinar)
+
+## 🔪 Preparación
+1. En un bowl, pisar la banana con un tenedor.
+2. Agregar el huevo y mezclar bien.
+3. Incorporar la avena, el polvo de hornear, la esencia de vainilla y la leche.
+4. Mezclar hasta obtener una mezcla homogénea.
+5. Calentar una sartén con un poco de aceite a fuego medio.
+6. Verter porciones de la mezcla para formar los pancakes.
+7. Cocinar 2-3 minutos por lado o hasta que estén dorados.
+8. Servir con toppings a gusto: fruta fresca, yogur, mermelada sin azúcar.
+
+## 💡 Notas
+- Se puede usar bebida vegetal en lugar de leche entera.
+- Agregar canela o ralladura de limón para más sabor.
+```
+
+**Implementation:**
+- See `core/recipe/generators/notion_blocks.py` for the block generation logic.
+- See `core/notion/sync.py` for how blocks are appended to the Notion page after creation.
+
+---
+
+## 🚀 Performance & Notion Integration Improvements
+
+### Processing Speed & Efficiency
+- **Timing and Profiling:** Added detailed timing for each step of the recipe processing and Notion sync pipeline in `core/cli.py` to identify bottlenecks and track improvements.
+- **Asynchronous Processing:** The extraction and parsing step is now run asynchronously to improve throughput and responsiveness.
+- **Planned Improvements:**
+  - Reduce or eliminate `time.sleep()` delays by implementing smarter polling or webhook-based updates from Notion, once API or workflow allows.
+  - Explore batch operations for Notion sync to minimize API round-trips.
+  - Continue profiling to target the slowest steps for optimization.
+
+### Enhanced Notion Recipe Pages
+- **Full Recipe Data in Notion:**
+  - The Notion sync logic (`core/notion/sync.py`) now sends all structured recipe data, including metadata, ingredients, and instructions, to the Notion page.
+  - The `recipe_to_notion_blocks` generator formats the recipe as rich Notion blocks: title, metadata, ingredients (bulleted list), instructions (numbered list), and notes.
+  - Ingredient and recipe relations are established between Notion databases for better cross-linking and navigation.
+- **Result:** Notion pages now provide a complete, well-formatted view of each recipe, improving usability and data integrity.
+
+These improvements are ongoing and will be updated as further optimizations and features are implemented.
+
+---
+
+# Product & User Experience Templates (For Future Expansion)
+
+## Product Vision (Template)
+- **Target Users:** [Describe primary user personas, e.g., home cooks, meal planners, nutritionists]
+- **Pain Points:** [Summarize main user problems this product solves]
+- **Unique Value:** [What makes this system different from other meal planning tools?]
+
+## User Journey (Template)
+- **Step 1:** [User uploads or selects a recipe file]
+- **Step 2:** [System processes and extracts recipe data]
+- **Step 3:** [Recipe and ingredients are synced to Notion]
+- **Step 4:** [User reviews and interacts with the Notion page]
+- **Diagram:** [Insert workflow diagram here]
+
+## Visuals (Template)
+- **Screenshot:** [Notion database or recipe page screenshot]
+- **Diagram:** [System architecture or data flow diagram]
+- **CLI Example:** [Sample CLI output or command]
+
+## Glossary (Template)
+- **Recipe Extraction:** [Definition]
+- **Ingredient Normalization:** [Definition]
+- **Processing Pipeline:** [Definition]
+- **Other Key Terms:** [Add as needed]
+
+## Non-Technical Summary (Template)
+- [Short, jargon-free summary of what the system does and why it matters]
+
+## Known Limitations & Out-of-Scope (Template)
+- **Current Limitations:** [e.g., Only supports Spanish/English, no mobile app, etc.]
+- **Out-of-Scope:** [Features or use cases not planned for this product]
+
+## User Feedback & Support (Template)
+- **Feedback:** [How users can provide feedback or request features]
+- **Support:** [Where users can get help or report issues]
+
+## Internationalization/Localization (Template)
+- **Supported Languages:** [List]
+- **Unit Conversion:** [How units are handled]
+- **Cultural Adaptation:** [How recipes or data are adapted for different regions]
+
+## Accessibility & Inclusivity (Template)
+- **Accessibility Features:** [e.g., Screen reader support, color contrast, etc.]
+- **Inclusivity:** [How the system supports diverse users]
+
+## Real-World Example (Template)
+- **Input:** [Sample raw recipe file]
+- **Processing Steps:** [Key transformations]
+- **Output:** [Screenshot or description of the final Notion page]
+
+---
+
+## Real-World Example: Complex Recipe End-to-End
+
+**Input:**
+File: `recetas/sin_procesar/test_12_complex_format.txt`
+```
+Risotto de Champiñones y Lentejas
+Porciones: 4-6
+Calorías: 380 por porción
+Tiempo de preparación: 20 minutos
+Tiempo de cocción: 45 minutos
+Dificultad: Media
+
+INGREDIENTES PRINCIPALES:
+- 1 1/2 tazas de arroz arborio (300g)
+- 1 taza de lentejas (200g)
+- 400g de champiñones frescos
+- 200g de chorizo español, en rodajas
+- 1 cebolla mediana
+- 2 dientes de ajo
+- 1/2 taza de vino blanco seco
+- 5 tazas de caldo de verduras
+- 1/2 taza de queso parmesano rallado
+- 2 cucharadas de mantequilla
+- 2 cucharadas de aceite de oliva
+- Sal y pimienta al gusto
+
+INGREDIENTES OPCIONALES:
+- 1/4 taza de crema de leche
+- 1 cucharada de perejil picado
+- 1 cucharadita de tomillo fresco
+- 1 cucharadita de pimentón dulce
+
+PREPARACIÓN:
+1. Preparar el caldo y mantener caliente
+2. Limpiar y cortar los champiñones en láminas
+3. Picar finamente la cebolla y el ajo
+4. En una olla grande, calentar el aceite y la mantequilla
+5. Agregar la cebolla y cocinar hasta transparente
+6. Incorporar el ajo, chorizo y champiñones
+7. Agregar el arroz y tostar ligeramente
+8. Verter el vino y dejar evaporar
+9. Agregar las lentejas y el caldo poco a poco
+10. Revolver constantemente hasta que el arroz esté al dente
+11. Incorporar el queso parmesano y rectificar la sazón
+
+VARIACIONES:
+1. Versión Vegetariana:
+   - Omitir el chorizo
+   - Usar caldo de verduras casero
+   - Agregar 1 taza de espinacas al final
+2. Versión de Mariscos:
+   - Reemplazar champiñones por 300g de mariscos mixtos
+   - Agregar 1 cucharadita de azafrán al caldo
+   - Usar caldo de pescado
+3. Versión Especial:
+   - Agregar 1 cucharadita de aceite de trufa
+   - Decorar con láminas de trufa fresca
+   - Usar caldo de carne
+
+CONSEJOS DE COCINA:
+- El caldo debe estar caliente al agregarlo
+- Revolver constantemente para liberar el almidón
+- Probar el arroz frecuentemente para el punto perfecto
+- Dejar reposar 2 minutos antes de servir
+- Las lentejas no necesitan remojo previo, pero mejora la textura
+- Se puede usar chorizo mexicano si no se encuentra el español
+
+INFORMACIÓN NUTRICIONAL:
+- Proteínas: 22g
+- Carbohidratos: 48g
+- Grasas: 12g
+- Fibra: 8g
+- Sodio: 800mg
+
+ALMACENAMIENTO:
+- Refrigerar: Hasta 3 días
+- Congelar: No recomendado
+- Recalentar: A fuego lento con un poco de caldo
+
+ACOMPAÑAMIENTOS SUGERIDOS:
+- Ensalada verde simple
+- Pan crujiente
+- Vino blanco seco
+- Queso parmesano rallado adicional
+
+NOTAS ADICIONALES:
+- El plato sabe mejor al día siguiente
+- Se puede preparar con anticipación y recalentar
+- Ajustar la cantidad de caldo según la textura deseada
+- Se puede agregar más verduras según preferencia
+```
+
+**Processing Steps:**
+1. Place the file in `recetas/sin_procesar/`.
+2. Run the CLI: `python -m core.cli process_recipes`.
+3. The system extracts metadata, ingredients (main and optional), instructions, variations, tips, nutrition, storage, and notes.
+4. Ingredients are normalized and cross-referenced with the pantry (Alacena) DB.
+5. The recipe and all ingredients are synced to Notion, with relations and rollups established.
+6. The Notion page is formatted with:
+   - Title and metadata block
+   - Bulleted lists for ingredients (main/optional)
+   - Numbered list for preparation
+   - Collapsible sections for variations, tips, nutrition, storage, and notes
+   - Linked ingredients and pantry items
+
+**Output:**
+- In Notion, a new page appears in the Recetas DB:
+  - Title: "Risotto de Champiñones y Lentejas"
+  - Metadata: Porciones, Calorías, Dificultad, Tiempos
+  - Ingredients: Each as a bulleted list, with relations to Ingredientes and Alacena DBs
+  - Preparation: Numbered steps
+  - Variations, tips, nutrition, storage, and notes as collapsible or separate sections
+  - All ingredient quantities and units are normalized and linked
+  - Rollups show total calories, pantry stock, and related recipes
+
+---
+
+## Configuration & Environment
+
+**Environment Variables:**
+- `NOTION_TOKEN`: Notion integration token
+- `NOTION_RECIPE_DB`: Notion Recetas database ID
+- `NOTION_INGREDIENTS_DB`: Notion Ingredientes database ID
+- `NOTION_PANTRY_DB`: Notion Alacena (pantry) database ID
+- `NOTION_SHOPPING_LIST_DB`: Notion Shopping List database ID
+- `LOG_LEVEL`: Logging level (e.g., INFO, DEBUG)
+- `ENVIRONMENT`: Environment name (development, production, etc.)
+- `ENABLE_PERFORMANCE_LOGGING`: Enable/disable performance logs
+- `CACHE_ENABLED`: Enable/disable caching
+- `TESSERACT_PATH`: Path to Tesseract OCR binary
+- `OCR_LANGUAGE`: OCR language(s), e.g., `spa+eng`
+
+**Configuration Files:**
+- `.env`: Main environment variable file (never commit secrets)
+- `core/utils/config.py`: Central config constants and helpers
+- `requirements.txt`, `requirements-dev.txt`: Dependency management
+- `.pre-commit-config.yaml`: Linting, formatting, and commit hooks
+- `.vscode/settings.json`: Editor config (optional)
+
+**Setup Steps:**
+1. Install system dependencies (Python 3.13, Tesseract, Poppler, etc.)
+2. Create and activate a Python virtual environment
+3. Install Python dependencies (`pip install -r requirements.txt`)
+4. Copy `.env.example` to `.env` and fill in your values
+5. Run `pre-commit install` for code quality hooks
+6. Use the CLI or Docker for running the system
+
+**Security & Permissions:**
+- API tokens and sensitive files should have permissions set to `600`
+- Token rotation and audit logging are supported (see `core/utils/security.py`)
+- Input validation and sanitization are enforced for recipe data
+
+**Deployment:**
+- Dockerfile provided for containerized deployment
+- Environment variables can be set via `.env` or Docker/Kubernetes secrets
+
+---

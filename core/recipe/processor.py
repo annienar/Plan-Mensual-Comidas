@@ -22,16 +22,24 @@ class RecipeProcessor:
         # 3. Extract and normalize metadata
         metadata_dict = self.metadata_extractor.extract(content)
         metadata = RecipeMetadata(
-            servings=metadata_dict.get("servings", 0) or 0,
-            calories_per_serving=metadata_dict.get("calories", None),
-            # Add more fields as needed
+            title=metadata_dict.get("title", "Desconocido"),
+            url=metadata_dict.get("url"),
+            porciones=metadata_dict.get("porciones"),
+            calorias=metadata_dict.get("calorias"),
+            tipo=metadata_dict.get("tipo"),
+            tags=metadata_dict.get("tags", []),
+            hecho=metadata_dict.get("hecho", False),
+            date=metadata_dict.get("date"),
+            dificultad=metadata_dict.get("dificultad"),
+            tiempo_preparacion=metadata_dict.get("tiempo_preparacion"),
+            tiempo_coccion=metadata_dict.get("tiempo_coccion"),
+            tiempo_total=metadata_dict.get("tiempo_total"),
+            notas=metadata_dict.get("notas"),
         )
         # 4. Create recipe object
         recipe = Recipe(
-            title=metadata_dict.get("title", "Desconocido"),
+            metadata=metadata,
             ingredients=normalized_ingredients,
             instructions=sections["instructions"],
-            metadata=metadata,
-            source=metadata_dict.get("url", None),
         )
         return recipe

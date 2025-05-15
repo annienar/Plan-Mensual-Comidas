@@ -81,7 +81,34 @@ class IngredientExtractor(BaseExtractor):
         ingredientes = []
         for l in lines:
             clean = re.sub(r"^[-*\s]+", "", l)
+            # Skip lines that are likely instructions or not ingredients
+            if re.match(r"^(\.|\d+\.|instrucciones?:|pasos?:|preparaci[oó]n:|steps?:|instructions?:)", clean, re.IGNORECASE):
+                continue
+            # Remove parenthetical weights (e.g., (120g))
+            clean = re.sub(r"\([^)]*\)", "", clean).strip()
+            # Remove 'Opcional:' or similar prefixes
+            optional = False
+            if re.match(r"^(opcional:|opcional -|opcional )", clean, re.IGNORECASE):
+                clean = re.sub(r"^(opcional:|opcional -|opcional )", "", clean, flags=re.IGNORECASE).strip()
+                optional = True
             parsed = _parsear_linea_ingrediente(clean)
-            if parsed["nombre"]:
+            # Remove 'al gusto' or 'to taste' from the end of the name
+            for phrase in ["al gusto", "to taste"]:
+                if parsed["nombre"].lower().endswith(phrase):
+                    parsed["nombre"] = parsed["nombre"][: -len(phrase)].strip()
+            # Remove leading 'de', 'la', 'el', etc.
+            parsed["nombre"] = re.sub(r"^(de|la|el|los|las|un|una|unos|unas)\s+", "", parsed["nombre"], flags=re.IGNORECASE)
+            # Mark as optional if detected
+            if optional:
+                parsed["opcional"] = True
+            # Split on ' y ' if present in the name
+            if " y " in parsed["nombre"]:
+                parts = [p.strip() for p in parsed["nombre"].split(" y ")]
+                for part in parts:
+                    if part:
+                        new_parsed = parsed.copy()
+                        new_parsed["nombre"] = part
+                        ingredientes.append(new_parsed)
+            else:
                 ingredientes.append(parsed)
         return ingredientes 
