@@ -1,0 +1,5 @@
+---
+description: Know when to update the documentation and run the python Documentation/tools/run_automation.py script
+globs: 
+alwaysApply: false
+---

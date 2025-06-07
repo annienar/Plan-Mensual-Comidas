@@ -159,3 +159,6 @@ pytest --cov=core --cov-report=html
    - Verificar requirements.txt
    - Usar entorno virtual limpio
    - Actualizar dependencias si es necesario
+
+## Referencias
+Para una visión general del proyecto, consulta el [README principal](../README.md).

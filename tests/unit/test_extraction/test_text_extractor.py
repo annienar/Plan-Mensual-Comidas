@@ -1,7 +1,7 @@
-import pytest
-from core.extraction.text import TextExtractor
+from core.application.recipe.extractors.text import TextExtractor
 from pathlib import Path
 
+import pytest
 RECIPE_FILES = [
     "tests/fixtures/recipes/sin_procesar/test_01_basic_recipe.txt",
     "tests/fixtures/recipes/sin_procesar/test_02_fractions_ranges.txt",
@@ -20,8 +20,9 @@ RECIPE_FILES = [
 ]
 
 @pytest.mark.parametrize("txt_path", RECIPE_FILES)
+
 def test_text_extractor_extract(txt_path):
     extractor = TextExtractor()
     result = extractor.extract(txt_path)
     assert isinstance(result, str)
-    assert len(result) > 0  # Should extract some text 
+    assert len(result) > 0  # Should extract some text

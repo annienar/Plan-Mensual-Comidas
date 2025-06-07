@@ -1,12 +1,13 @@
-import pytest
-from core.recipe.normalizers.text import TextNormalizer
+from core.domain.recipe.normalizers.text import TextNormalizer
 
-@pytest.mark.parametrize("text,expected", [
-    ("  Hello world  ", "Hello world"),
-    ("\n\tRecipe Title\n", "Recipe Title"),
-    ("No extra space", "No extra space"),
-    ("   ", ""),
+import pytest
+@pytest.mark.parametrize("text, expected", [
+    ("  Hello world  ", "hello world"), 
+    ("\n\tRecipe Title\n", "recipe title"), 
+    ("No extra space", "no extra space"), 
+    ("   ", ""), 
 ])
+
 def test_text_normalizer(text, expected):
     result = TextNormalizer().normalize(text)
     assert isinstance(result, str)

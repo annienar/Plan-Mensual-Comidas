@@ -1,0 +1,221 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Platform Planning Documentation Rule
+
+## Rule Configuration
+```json
+{
+  "name": "Platform Planning Documentation",
+  "description": "Updates documentation files based on platform planning decisions and task completion",
+  "triggers": {
+    "onPlanningDecision": true,
+    "onArchitectureChange": true,
+    "onFeaturePlanning": true,
+    "onTaskCompletion": true
+  },
+  "actions": [
+    {
+      "type": "updateDocumentation",
+      "files": [
+        "docs/documentation-plan.md",
+        "docs/llm-context.md",
+        "docs/llm-integration.md"
+      ],
+      "updateTypes": [
+        "platformDecisions",
+        "architectureUpdates",
+        "featurePlanning",
+        "integrationStrategy",
+        "implementationPlan",
+        "taskCompletion"
+      ]
+    }
+  ],
+  "conditions": {
+    "documentationFiles": [
+      "docs/documentation-plan.md",
+      "docs/llm-context.md",
+      "docs/llm-integration.md"
+    ]
+  }
+}
+```
+
+## Documentation Updates
+
+### 1. documentation-plan.md
+Update when:
+- Planning:
+  - System architecture changes
+  - Development standards updates
+  - Testing strategy modifications
+  - Deployment process changes
+  - Documentation structure updates
+- Task Completion:
+  - Architecture implementation
+  - Development standard adoption
+  - Testing framework setup
+  - Deployment pipeline updates
+  - Documentation structure implementation
+
+### 2. llm-context.md
+Update when:
+- Planning:
+  - LLM model selection changes
+  - Context management strategy updates
+  - Prompt engineering decisions
+  - Response processing modifications
+  - Error handling strategy changes
+- Task Completion:
+  - Model integration
+  - Context management implementation
+  - Prompt pattern implementation
+  - Response processing setup
+  - Error handling implementation
+
+### 3. llm-integration.md
+Update when:
+- Planning:
+  - API integration strategy changes
+  - Data flow architecture updates
+  - Performance optimization plans
+  - Security measure updates
+  - Testing strategy modifications
+- Task Completion:
+  - API integration implementation
+  - Data flow setup
+  - Performance optimizations
+  - Security measures implementation
+  - Testing framework setup
+
+## Planning Decision Template
+```markdown
+## Decision: [Title]
+
+**Date:** [YYYY-MM-DD]
+**Status:** [Proposed/Approved/Implemented]
+
+### Context
+[Describe the planning context]
+
+### Decision
+[Describe the planning decision]
+
+### Rationale
+[Explain the reasoning]
+
+### Implementation Plan
+- [ ] Phase 1: [Description]
+  - [ ] Task 1: [Description]
+  - [ ] Task 2: [Description]
+  - [ ] Task 3: [Description]
+- [ ] Phase 2: [Description]
+  - [ ] Task 1: [Description]
+  - [ ] Task 2: [Description]
+  - [ ] Task 3: [Description]
+- [ ] Phase 3: [Description]
+  - [ ] Task 1: [Description]
+  - [ ] Task 2: [Description]
+  - [ ] Task 3: [Description]
+
+### Impact
+- Architecture: [Impact on architecture]
+- Development: [Impact on development]
+- Testing: [Impact on testing]
+- Deployment: [Impact on deployment]
+
+### Timeline
+- Start Date: [YYYY-MM-DD]
+- Target Completion: [YYYY-MM-DD]
+- Key Milestones: [List milestones]
+```
+
+## Task Completion Template
+```markdown
+## Task Completion: [Task Name]
+
+**Date Completed:** [YYYY-MM-DD]
+**Related Decision:** [Link to decision]
+**Status:** [Completed/Partially Completed/On Hold]
+
+### Implementation Details
+- [Description of implementation]
+- [Key changes made]
+- [Technical details]
+
+### Verification
+- [ ] Unit tests passed
+- [ ] Integration tests passed
+- [ ] Performance requirements met
+- [ ] Security requirements met
+- [ ] Documentation updated
+
+### Next Steps
+- [ ] Update related documentation
+- [ ] Notify stakeholders
+- [ ] Plan next phase
+- [ ] Schedule review
+```
+
+## Status Tracking
+- [x] Decision Made
+- [ ] Implementation Started
+- [ ] In Progress
+- [ ] Completed
+- [ ] On Hold
+
+## Task Status Indicators
+- [x] Task Completed
+- [ ] Task In Progress
+- [ ] Task Blocked
+- [ ] Task On Hold
+- [ ] Task Cancelled
+
+## Documentation Sections to Update
+
+### 1. documentation-plan.md
+- Project Overview
+- System Architecture
+- Development Guidelines
+- Testing Strategy
+- Deployment Process
+- Implementation Status
+
+### 2. llm-context.md
+- LLM Integration Strategy
+- Context Management
+- Prompt Engineering
+- Response Processing
+- Error Handling
+- Implementation Progress
+
+### 3. llm-integration.md
+- API Integration
+- Data Flow
+- Performance
+- Security
+- Testing
+- Task Completion Status
+
+## Update Process
+1. Document planning decision
+2. Update relevant documentation sections
+3. Add implementation plan
+4. Update status indicators
+5. Review and verify changes
+6. Track task completion
+7. Update implementation status
+8. Verify documentation accuracy
+
+## Health Checks
+- Planning decisions documented
+- Implementation plans clear
+- Timeline established
+- Impact assessed
+- Documentation updated
+- Task completion tracked
+- Implementation status current
+- Verification steps completed

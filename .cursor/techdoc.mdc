@@ -1,0 +1,301 @@
+---
+description: whenever we make technical changes we need to apply this rule
+globs: 
+alwaysApply: false
+---
+# Documentation Automation
+
+## When to Run
+The documentation automation script should be run in the following scenarios:
+
+1. **After Code Changes**
+   - When adding new API endpoints
+   - When modifying existing endpoints
+   - When adding or updating tests
+   - When making changes that affect system architecture
+
+2. **Before Documentation Reviews**
+   - Before deploying new features
+
+3. **Regular Maintenance**
+   - Weekly or bi-weekly to keep documentation in sync
+   - After major feature releases
+
+## How to Run
+1. Ensure dependencies are installed:
+```bash
+pip install -r Documentation/tools/requirements.txt
+```
+
+2. Set up environment variables (if using Notion integration):
+```bash
+export NOTION_TOKEN="your_token"
+export NOTION_RECIPE_DB="your_db_id"
+export NOTION_INGREDIENT_DB="your_db_id"
+export NOTION_PANTRY_DB="your_db_id"
+```
+
+3. Run the automation script:
+```bash
+python Documentation/tools/run_automation.py
+```
+
+## Generated Files
+The script will update the following files in `Documentation/generated/`:
+- `api_docs.md` - API documentation
+- `test_documentation.md` - Test coverage and results
+- `diagram_*.mmd` - System architecture diagrams
+- `glossary.md` - Updated glossary of terms
+
+## Rule Configuration
+```json
+{
+  "name": "Run Documentation Automation",
+  "description": "Runs documentation generation when requested by the AI agent",
+  "triggers": {
+    "agentRequested": true
+  },
+  "actions": [
+    {
+      "type": "command",
+      "command": "python Documentation/tools/run_automation.py",
+      "cwd": "${workspaceRoot}"
+    }
+  ],
+  "conditions": {
+    "fileExists": "Documentation/tools/run_automation.py"
+  }
+}
+```
+
+This rule will be triggered when:
+- The AI agent determines documentation needs to be updated
+- The user explicitly requests documentation generation
+- After significant code changes that affect documentation
+
+The AI agent will automatically suggest running this rule when:
+- New API endpoints are added
+- Test coverage changes
+- System architecture is modified
+- Documentation files are updated
+
+# Documentation Update Rules
+
+## Overview
+This document defines the rules for maintaining and updating documentation in the Monthly Meal Plan system. Documentation files are located in the `/docs` directory and are automatically updated when changes are made to the codebase.
+
+## Documentation Structure
+- `documentation-plan.md`: Overall documentation structure and standards
+- `llm-context.md`: LLM integration context and requirements
+- `llm-integration.md`: Technical details of LLM integration
+
+## Update Triggers
+Documentation must be updated when:
+- New features are added
+- Existing features are modified
+- System architecture is modified
+- Documentation files are updated
+
+## Technical Documentation Requirements
+
+### 1. Code Documentation
+- All functions and classes must have docstrings
+- Include type hints for all parameters and return values
+- Document exceptions that may be raised
+- Provide usage examples for complex functions
+- Document any side effects or state changes
+
+### 2. Architecture Documentation
+- Document system components and their interactions
+- Include sequence diagrams for complex workflows
+- Document data flow between components
+- Specify integration points with external systems
+- Document security boundaries and data protection measures
+
+### 3. API Documentation
+- Document all endpoints with OpenAPI/Swagger specifications
+- Include request/response examples
+- Document error scenarios and status codes
+- Specify rate limits and throttling rules
+- Document authentication and authorization requirements
+
+### 4. Database Documentation
+- Document schema changes and migrations
+- Include ERD diagrams for data models
+- Document indexes and optimization strategies
+- Specify backup and recovery procedures
+- Document data retention policies
+
+### 5. Configuration Documentation
+- Document all environment variables
+- Specify configuration file formats and options
+- Document default values and their implications
+- Include security considerations for sensitive configs
+- Document configuration validation rules
+
+### 6. Testing Documentation
+- Document test coverage requirements
+- Include test data setup procedures
+- Document mocking strategies
+- Specify performance testing criteria
+- Document security testing requirements
+
+### 7. Deployment Documentation
+- Document deployment procedures
+- Include rollback procedures
+- Specify infrastructure requirements
+- Document monitoring and alerting setup
+- Include troubleshooting guides
+
+### 8. Security Documentation
+- Document authentication mechanisms
+- Specify authorization rules
+- Document data encryption methods
+- Include security best practices
+- Document compliance requirements
+
+### 9. Performance Documentation
+- Document performance benchmarks
+- Include optimization strategies
+- Specify resource requirements
+- Document caching strategies
+- Include load testing procedures
+
+### 10. Integration Documentation
+- Document third-party integrations
+- Include API versioning strategies
+- Specify error handling procedures
+- Document retry mechanisms
+- Include fallback strategies
+
+## Documentation Update Process
+
+### 1. When to Update
+- New feature implementation
+- Bug fixes affecting behavior
+- Architecture changes
+- Security updates
+- Performance optimizations
+- Configuration changes
+- API modifications
+- Database schema updates
+
+### 2. Update Requirements
+- Update relevant documentation before code changes
+- Include code examples where applicable
+- Update diagrams and flowcharts
+- Revise affected sections
+- Add migration guides if needed
+
+### 3. Review Process
+- Technical review of documentation
+- Code review integration
+- Security review
+- Performance validation
+- Cross-team review
+
+### 4. Version Control
+- Document changes in commit messages
+- Link documentation to code changes
+- Tag documentation with release versions
+- Maintain changelog
+- Track breaking changes
+
+## Documentation Standards
+
+### 1. Format
+- Use Markdown for all documentation
+- Include code blocks with language specification
+- Use diagrams for complex concepts
+- Maintain consistent formatting
+- Use clear and concise language
+
+### 2. Structure
+- Organize by technical domain
+- Use clear section headings
+- Include table of contents
+- Maintain consistent hierarchy
+- Cross-reference related sections
+
+### 3. Quality
+- Ensure technical accuracy
+- Keep documentation up-to-date
+- Verify code examples
+- Test configuration examples
+- Validate API documentation
+
+### 4. Maintenance
+- Regular technical review
+- Update on code changes
+- Verify links and references
+- Check for deprecated content
+- Archive outdated documentation
+
+## Tools and Automation
+
+### 1. Documentation Tools
+- API documentation generators
+- Architecture diagram tools
+- Code documentation tools
+- Documentation testing tools
+- Link checkers
+
+### 2. Automation
+- Documentation build process
+- Automated testing
+- Link validation
+- Code example verification
+- Documentation deployment
+
+## Team Responsibilities
+
+### 1. Developers
+- Document code changes
+- Update API documentation
+- Maintain code examples
+- Review technical accuracy
+- Update configuration docs
+
+### 2. Architects
+- Document architecture decisions
+- Update system diagrams
+- Maintain integration docs
+- Review technical content
+- Update security docs
+
+### 3. DevOps
+- Document deployment procedures
+- Update infrastructure docs
+- Maintain monitoring docs
+- Review configuration docs
+- Update security procedures
+
+### 4. QA Team
+- Document testing procedures
+- Update test documentation
+- Maintain test data docs
+- Review test coverage
+- Update performance docs
+
+## Metrics and Monitoring
+
+### 1. Documentation Health
+- Coverage metrics
+- Update frequency
+- Review completion
+- Accuracy checks
+- Usage analytics
+
+### 2. Quality Metrics
+- Technical accuracy
+- Completeness
+- Clarity
+- Consistency
+- Maintainability
+
+### 3. Usage Metrics
+- Page views
+- Search queries
+- Support tickets
+- User feedback
+- Error reports
