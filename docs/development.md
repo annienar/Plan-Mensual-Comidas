@@ -136,16 +136,43 @@ test(pantry): add pantry availability tests
 
 ### Project Structure
 ```
-core/
-├── domain/         # Business logic (Recipe, Ingredient, Pantry)
-├── infrastructure/ # External integrations (Notion, LLM)
-├── application/    # Use cases and workflows
-└── cli.py         # Command-line interface
-
-tests/
-├── unit/          # Unit tests
-├── integration/   # Integration tests
-└── fixtures/      # Test data
+plan-mensual-comidas/
+├── 📁 recipes/                    # 🎯 MAIN RECIPE WORKFLOW
+│   ├── sin_procesar/             # Raw input recipes (txt, pdf, images)
+│   ├── procesadas/               # Successfully processed recipes
+│   ├── errores/                  # Failed processing recipes
+│   └── json/                     # Final clean JSON recipes (production-ready)
+├── 🏗️ core/                      # Application core
+│   ├── domain/                  # Business logic (Recipe, Ingredient, Pantry)
+│   │   ├── recipe/              # Recipe domain models & services
+│   │   └── meal_plan/           # Meal planning domain
+│   ├── application/             # Use cases and workflows
+│   │   ├── recipe/              # Recipe processing workflows
+│   │   └── meal_plan/           # Meal planning workflows
+│   ├── infrastructure/          # External integrations
+│   │   ├── llm/                 # LLM client (Ollama)
+│   │   ├── notion/              # Notion integration
+│   │   └── monitoring/          # System monitoring
+│   ├── config/                  # Configuration management
+│   ├── utils/                   # Utility functions
+│   └── exceptions/              # Custom exceptions
+├── 🧪 tests/                     # All test-related files
+│   ├── unit/                    # Unit tests
+│   ├── integration/             # Integration tests
+│   ├── performance/             # Performance tests
+│   ├── cli/                     # CLI tests
+│   ├── fixtures/                # Test data and fixtures
+│   └── test_results/            # Test output files
+├── ⚙️ config/                    # Environment configurations
+│   ├── development/            # Dev environment config
+│   ├── production/             # Production config  
+│   └── testing/                # Test config
+├── 💾 var/                       # Variable system data (Unix convention)
+│   ├── logs/                   # Runtime logs
+│   ├── cache/                  # Application cache
+│   └── test-results/           # Historical test logs
+├── 📜 scripts/                   # Utility scripts & automation
+└── 📚 docs/                      # Documentation
 ```
 
 ### Design Principles

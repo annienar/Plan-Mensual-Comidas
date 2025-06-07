@@ -397,6 +397,7 @@ python -m core.cli batch_process --parallel "recipes/sin_procesar/*.txt"
 
 ### Documentation
 - [Development Guide](development.md) - For contributors
+- [Directory Structure](directory-structure.md) - Project organization
 - [LLM Integration](llm/integration.md) - Technical details
 - [Notion Integration](notion.md) - Database setup
 - [Project Roadmap](project-roadmap.md) - Future plans

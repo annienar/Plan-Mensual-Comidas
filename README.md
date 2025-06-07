@@ -131,21 +131,51 @@ ruff check .
 
 ```
 plan-mensual-comidas/
-├── core/                    # Core module
-│   ├── application/        # Application layer
-│   │   ├── generation/    # Recipe generation
-│   │   └── extraction/    # Recipe extraction
-│   ├── domain/            # Domain layer
-│   │   └── recipe/        # Recipe domain
-│   └── infrastructure/    # Infrastructure layer
-│       ├── llm/          # LLM client
-│       ├── notion/       # Notion client
-│       ├── monitoring/   # Monitoring
-│       └── logging/      # Logging
-├── tests/                 # Tests
-├── docs/                 # Documentation
-├── pyproject.toml        # Project configuration
-└── README.md            # This file
+├── 📁 recipes/                    # 🎯 MAIN RECIPE WORKFLOW
+│   ├── sin_procesar/             # Raw input recipes
+│   ├── procesadas/               # Successfully processed recipes
+│   ├── errores/                  # Failed processing recipes
+│   └── json/                     # Final clean JSON recipes (production-ready)
+├── 🏗️ core/                      # Application core
+│   ├── application/              # Application layer
+│   │   ├── recipe/              # Recipe processing
+│   │   └── meal_plan/           # Meal planning
+│   ├── domain/                  # Domain layer
+│   │   ├── recipe/              # Recipe domain models
+│   │   └── meal_plan/           # Meal plan domain
+│   ├── infrastructure/          # Infrastructure layer
+│   │   ├── llm/                 # LLM client (Ollama)
+│   │   ├── notion/              # Notion integration
+│   │   └── monitoring/          # System monitoring
+│   ├── config/                  # Configuration management
+│   ├── utils/                   # Utility functions
+│   └── exceptions/              # Custom exceptions
+├── 🧪 tests/                     # All test-related files
+│   ├── unit/                    # Unit tests
+│   ├── integration/             # Integration tests
+│   ├── performance/             # Performance tests
+│   ├── cli/                     # CLI tests
+│   ├── fixtures/                # Test data and fixtures
+│   └── test_results/            # Test output files
+├── 📚 docs/                      # Documentation
+│   ├── user-guide.md           # User documentation
+│   ├── development.md          # Developer guide
+│   └── features/               # Feature documentation
+├── ⚙️ config/                    # Environment configurations
+│   ├── development/            # Dev environment config
+│   ├── production/             # Production config
+│   └── testing/                # Test config
+├── 📜 scripts/                   # Utility scripts
+│   ├── development/            # Development helpers
+│   └── refactoring/            # Code maintenance
+├── 💾 var/                       # Variable system data (Unix convention)
+│   ├── logs/                   # Runtime logs
+│   ├── cache/                  # Application cache
+│   └── test-results/           # Historical test logs
+├── 🖥️ htmlcov/                   # HTML coverage reports
+├── 📄 logs/                      # Application logs
+├── pyproject.toml               # Project configuration & dependencies
+└── README.md                   # This file
 ```
 
 ## Contributing
