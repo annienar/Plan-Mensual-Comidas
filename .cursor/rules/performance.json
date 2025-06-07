@@ -1,0 +1,75 @@
+{
+  "performance": {
+    "recipe_processing": {
+      "time_thresholds": {
+        "single_recipe_max_seconds": 30,
+        "batch_processing_max_minutes": 10,
+        "llm_response_max_seconds": 15,
+        "file_upload_max_seconds": 5
+      },
+      "resource_limits": {
+        "max_memory_usage_mb": 512,
+        "max_cpu_usage_percent": 80,
+        "max_disk_usage_gb": 1,
+        "max_concurrent_processes": 3
+      },
+      "caching": {
+        "cache_processed_recipes": true,
+        "cache_llm_responses": true,
+        "cache_ocr_results": true,
+        "cache_location": "var/cache/",
+        "cache_ttl_hours": 24
+      }
+    },
+    "monitoring": {
+      "metrics_collection": {
+        "collect_processing_times": true,
+        "collect_success_rates": true,
+        "collect_error_rates": true,
+        "collect_resource_usage": true
+      },
+      "performance_logging": {
+        "log_slow_operations": true,
+        "log_resource_spikes": true,
+        "log_cache_hits_misses": true,
+        "performance_log": "var/logs/performance.log"
+      },
+      "alerts": {
+        "slow_processing_threshold": 45,
+        "high_memory_usage": 0.8,
+        "high_error_rate": 0.15,
+        "cache_miss_rate": 0.7
+      }
+    },
+    "optimization": {
+      "automatic_cleanup": {
+        "old_logs_days": 7,
+        "old_cache_hours": 48,
+        "old_temp_files_hours": 2
+      },
+      "batch_optimization": {
+        "optimal_batch_size": 5,
+        "parallel_processing": false,
+        "queue_management": true
+      },
+      "database_optimization": {
+        "index_recipe_names": true,
+        "cache_frequent_queries": true,
+        "optimize_search": true
+      }
+    },
+    "testing": {
+      "performance_tests": {
+        "require_benchmark_tests": true,
+        "test_with_large_files": true,
+        "test_batch_processing": true,
+        "test_concurrent_usage": true
+      },
+      "load_testing": {
+        "max_concurrent_users": 10,
+        "test_file_upload_limits": true,
+        "test_processing_queue": true
+      }
+    }
+  }
+} 

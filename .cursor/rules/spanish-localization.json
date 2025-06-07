@@ -1,0 +1,65 @@
+{
+  "spanish_localization": {
+    "language_standards": {
+      "primary_language": "es-ES",
+      "fallback_language": "en-US",
+      "character_encoding": "utf-8",
+      "locale_settings": "es_ES.UTF-8"
+    },
+    "recipe_terminology": {
+      "required_spanish_fields": [
+        "nombre",
+        "ingredientes",
+        "preparacion", 
+        "porciones",
+        "tiempo_preparacion",
+        "dificultad"
+      ],
+      "measurement_units": {
+        "volume": ["ml", "l", "taza", "cucharada", "cucharadita"],
+        "weight": ["g", "kg", "onza", "libra"],
+        "temperature": "celsius",
+        "time": ["minutos", "horas"]
+      },
+      "cooking_terms": {
+        "validate_spanish_verbs": true,
+        "common_techniques": [
+          "freír", "hornear", "hervir", "saltear", "asar",
+          "mezclar", "batir", "picar", "cortar", "rehogar"
+        ]
+      }
+    },
+    "text_processing": {
+      "accent_handling": {
+        "preserve_accents": true,
+        "normalize_unicode": true,
+        "handle_missing_accents": true
+      },
+      "spanish_nlp": {
+        "stemming": "spanish",
+        "stopwords": "spanish",
+        "tokenization": "spanish_aware"
+      },
+      "ingredient_parsing": {
+        "spanish_quantity_patterns": true,
+        "unit_conversion": "metric",
+        "ingredient_recognition": "spanish_food_database"
+      }
+    },
+    "content_validation": {
+      "spanish_grammar_check": false,
+      "culinary_context_validation": true,
+      "regional_variations": {
+        "allow_mexican_terms": true,
+        "allow_argentinian_terms": true,
+        "allow_spanish_peninsular": true
+      }
+    },
+    "output_formatting": {
+      "date_format": "dd/mm/yyyy",
+      "number_format": "1.234,56",
+      "list_separators": "spanish",
+      "quotation_marks": "spanish_style"
+    }
+  }
+} 

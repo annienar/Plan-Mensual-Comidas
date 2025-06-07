@@ -9,36 +9,100 @@
         "style",
         "refactor",
         "test",
-        "chore"
+        "chore",
+        "perf",
+        "ci",
+        "build"
+      ],
+      "scopes": [
+        "core",
+        "recipes",
+        "tests",
+        "scripts",
+        "docs",
+        "config",
+        "ci"
       ],
       "max_length": 72,
-      "require_body_for_breaking_change": true
+      "require_body_for_breaking_change": true,
+      "examples": [
+        "feat(recipes): add PDF extraction support",
+        "fix(core): resolve LLM timeout issues",
+        "docs(api): update recipe processing guide",
+        "refactor(tests): consolidate unit test structure"
+      ]
     },
     "branch": {
       "naming": {
-        "pattern": "^(feature|bugfix|hotfix|release)/[a-z0-9-]+$",
+        "pattern": "^(feature|bugfix|hotfix|release|cleanup)/[a-z0-9-]+$",
         "examples": [
           "feature/add-recipe-validation",
           "bugfix/fix-pdf-parsing",
+          "cleanup/file-organization",
           "release/v1.5.1"
         ]
       },
       "protection": {
         "main": {
           "require_review": true,
-          "require_tests": true
+          "require_tests": true,
+          "require_status_checks": ["pytest", "lint", "type-check"]
         }
       }
     },
     "ignore": {
       "patterns": [
-        ".env",
-        "*.pyc",
+        "# Python",
         "__pycache__/",
-        ".venv/",
+        "*.py[cod]",
+        "*$py.class",
+        "*.so",
+        ".Python",
+        "build/",
+        "dist/",
+        "*.egg-info/",
+        "",
+        "# Virtual Environment",
+        ".env",
+        ".venv",
+        "venv/",
+        "ENV/",
+        "",
+        "# IDE & Editors",
+        ".idea/",
+        ".vscode/",
+        "*.swp",
+        "*.swo",
+        ".DS_Store",
+        "",
+        "# Testing & Coverage",
         ".coverage",
-        "*.log"
+        "htmlcov/",
+        ".pytest_cache/",
+        ".tox/",
+        "coverage.xml",
+        "*.cover",
+        "",
+        "# Logs & Runtime Data", 
+        "*.log",
+        "var/logs/",
+        "var/test-results/",
+        "var/cache/",
+        "",
+        "# Project Specific",
+        "output/",
+        "temp/",
+        "scripts/archive/"
       ]
+    },
+    "hooks": {
+      "pre_commit": [
+        "pytest tests/unit/",
+        "black --check .",
+        "flake8",
+        "mypy core/"
+      ],
+      "commit_msg": "validate_conventional_commits"
     }
   }
 }

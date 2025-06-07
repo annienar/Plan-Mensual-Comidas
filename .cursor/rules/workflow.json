@@ -1,0 +1,122 @@
+{
+  "workflow": {
+    "file_lifecycle": {
+      "creation": {
+        "require_header_comment": true,
+        "template_locations": {
+          "python_module": "templates/python_module.py",
+          "test_file": "templates/test_template.py", 
+          "markdown_doc": "templates/doc_template.md"
+        },
+        "auto_git_add": false
+      },
+      "modification": {
+        "update_modified_date": true,
+        "require_changelog_entry": true,
+        "auto_format_on_save": true
+      },
+      "archival": {
+        "archive_location": "archive/",
+        "preserve_git_history": true,
+        "document_reason": true,
+        "create_archive_readme": true
+      }
+    },
+    "documentation_automation": {
+      "decision_driven_updates": {
+        "single_source_principle": true,
+        "avoid_duplication": true,
+        "central_decisions_location": "docs/decisions/",
+        "decision_format": "ADR"
+      },
+      "triggers": {
+        "decision_made": {
+          "create_decision_record": "docs/decisions/NNNN-title.md",
+          "identify_affected_docs": "auto_detect",
+          "update_affected_sections": true,
+          "validate_consistency": true,
+          "run_script": "python Documentation/tools/run_automation.py"
+        },
+        "directory_structure_change": {
+          "update_files": [
+            "docs/directory-structure.md",
+            "README.md"
+          ],
+          "check_for_duplicates": true,
+          "consolidate_if_needed": true
+        },
+        "api_change": {
+          "update_files": [
+            "docs/api.md",
+            "docs/development.md"
+          ],
+          "auto_generate_from_code": true,
+          "avoid_manual_duplication": true
+        },
+        "recipe_processing_change": {
+          "update_files": [
+            "docs/recipe-processing.md",
+            "docs/llm-integration.md"
+          ],
+          "cross_reference_decisions": true,
+          "maintain_single_source": true
+        }
+      },
+      "duplication_prevention": {
+        "content_deduplication": true,
+        "use_includes_for_shared_content": true,
+        "maintain_content_registry": true,
+        "validate_cross_references": true
+      },
+      "auto_generate": {
+        "api_docs": true,
+        "directory_tree": true,
+        "test_coverage_report": true,
+        "decision_index": true,
+        "content_map": true
+      }
+    },
+    "recipe_processing_pipeline": {
+      "workflow_stages": [
+        "sin_procesar",
+        "procesadas", 
+        "json",
+        "validated"
+      ],
+      "required_validations": [
+        "spanish_field_validation",
+        "ingredient_format_check",
+        "preparation_steps_validation"
+      ],
+      "error_handling": {
+        "move_failed_to": "recipes/errores/",
+        "log_errors_to": "var/logs/recipe_processing.log",
+        "retry_attempts": 3
+      },
+      "performance_thresholds": {
+        "max_processing_time_seconds": 30,
+        "max_file_size_mb": 10,
+        "batch_size": 5
+      }
+    },
+    "large_scale_changes": {
+      "refactoring": {
+        "require_branch": "refactor/*",
+        "require_tests_pass": true,
+        "document_changes": "docs/refactoring-log.md",
+        "backup_before_change": true
+      },
+      "migration": {
+        "create_migration_script": true,
+        "test_rollback": true,
+        "update_documentation": true,
+        "preserve_data": true
+      },
+      "cleanup": {
+        "archive_dont_delete": true,
+        "update_gitignore": true,
+        "run_verification": "python scripts/manage_scripts.py health"
+      }
+    }
+  }
+} 

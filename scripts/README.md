@@ -13,7 +13,7 @@ This directory contains optimized and consolidated scripts for managing various 
 | `update_imports.py` | Development | Import optimization and management | ✅ Enhanced |
 | `cleanup_logs.sh` | Maintenance | Log file and cache cleanup | ✅ Existing |
 | `run_integration_tests.sh` | Testing | Integration test execution | ✅ Existing |
-| `reorganize.py` | Development | Project structure reorganization | ✅ Existing |
+
 | `manage_scripts.py` | Management | Script orchestration utility | ✅ New |
 
 ### 🗂️ Directory Structure
@@ -27,7 +27,7 @@ scripts/
 ├── run_integration_tests.sh            # Integration testing
 ├── development/
 │   ├── update_imports.py              # Enhanced import manager
-│   └── reorganize.py                  # Project reorganization
+
 └── refactoring/
     └── check_code_quality.py          # Comprehensive quality checker
 ```

@@ -1,0 +1,76 @@
+{
+  "data_pipeline": {
+    "recipe_processing": {
+      "input_validation": {
+        "supported_formats": [".txt", ".pdf", ".jpg", ".jpeg", ".png"],
+        "max_file_size_mb": 10,
+        "encoding": "utf-8",
+        "require_spanish_content": true
+      },
+      "processing_stages": {
+        "extraction": {
+          "methods": ["llm", "ocr", "text_parsing"],
+          "fallback_chain": ["llm", "rule_based"],
+          "output_format": "json"
+        },
+        "validation": {
+          "required_fields": ["nombre", "ingredientes", "preparacion"],
+          "spanish_validation": true,
+          "ingredient_parsing": true,
+          "portion_validation": true
+        },
+        "normalization": {
+          "standardize_measurements": true,
+          "clean_ingredient_names": true,
+          "format_instructions": true
+        }
+      },
+      "quality_assurance": {
+        "confidence_threshold": 0.8,
+        "manual_review_required": false,
+        "automatic_correction": true,
+        "human_feedback_integration": true
+      }
+    },
+    "data_flow": {
+      "directories": {
+        "input": "recipes/sin_procesar/",
+        "processing": "recipes/procesadas/",
+        "output": "recipes/json/",
+        "errors": "recipes/errores/",
+        "archive": "recipes/archive/"
+      },
+      "workflow_tracking": {
+        "log_all_operations": true,
+        "track_processing_time": true,
+        "record_success_rate": true,
+        "maintain_audit_trail": true
+      }
+    },
+    "batch_processing": {
+      "batch_size": 5,
+      "parallel_processing": false,
+      "retry_failed": true,
+      "progress_reporting": true,
+      "checkpoint_frequency": 10
+    },
+    "monitoring": {
+      "performance_metrics": {
+        "processing_time_per_recipe": true,
+        "success_rate": true,
+        "error_rate_by_type": true,
+        "resource_usage": true
+      },
+      "alerts": {
+        "high_error_rate": 0.2,
+        "slow_processing": 60,
+        "disk_space_low": 0.1
+      },
+      "reporting": {
+        "daily_summary": true,
+        "weekly_report": true,
+        "export_metrics": "var/logs/pipeline_metrics.json"
+      }
+    }
+  }
+} 

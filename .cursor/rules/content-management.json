@@ -1,0 +1,143 @@
+{
+  "content_management": {
+    "documentation_architecture": {
+      "single_source_principle": {
+        "enforce_one_canonical_source": true,
+        "use_references_not_copies": true,
+        "maintain_content_registry": "docs/.content-registry.json",
+        "prevent_unnecessary_files": true,
+        "update_existing_over_creating_new": true
+      },
+      "file_creation_rules": {
+        "require_justification_for_new_docs": true,
+        "check_existing_docs_first": true,
+        "preferred_update_locations": [
+          ".cursor/rules/README.md",
+          ".cursor/rules/RULES_ANALYSIS.md", 
+          "docs/development.md",
+          "README.md"
+        ],
+        "forbidden_duplicate_topics": [
+          "rules_overview",
+          "anti_duplication_strategy", 
+          "decision_templates",
+          "implementation_guides"
+        ]
+      },
+      "content_types": {
+        "decisions": {
+          "location": "docs/decisions/",
+          "format": "ADR",
+          "naming": "NNNN-title-slug.md",
+          "template": "docs/templates/decision-template.md"
+        },
+        "api_documentation": {
+          "location": "docs/api/",
+          "auto_generated": true,
+          "source": "code_docstrings",
+          "format": "markdown"
+        },
+        "guides": {
+          "location": "docs/guides/",
+          "cross_reference_decisions": true,
+          "avoid_duplication": true
+        },
+        "reference": {
+          "location": "docs/reference/",
+          "auto_generated": true,
+          "single_source": true
+        }
+      }
+    },
+    "duplication_detection": {
+      "content_similarity_check": {
+        "threshold": 0.8,
+        "check_on_save": true,
+        "suggest_consolidation": true
+      },
+      "redundant_sections": {
+        "identify_duplicate_headings": true,
+        "flag_similar_content": true,
+        "suggest_merge_opportunities": true
+      },
+      "cross_document_analysis": {
+        "track_shared_concepts": true,
+        "maintain_concept_glossary": "docs/glossary.md",
+        "link_related_sections": true
+      }
+    },
+    "update_propagation": {
+      "decision_impact_tracking": {
+        "affected_documents": "auto_detect",
+        "update_notifications": true,
+        "batch_updates": true,
+        "validation_after_update": true
+      },
+      "cascade_updates": {
+        "when_decision_changes": [
+          "update_affected_guides",
+          "update_api_docs",
+          "update_examples",
+          "update_references"
+        ],
+        "when_code_changes": [
+          "update_api_docs",
+          "update_examples",
+          "validate_guides"
+        ],
+        "when_structure_changes": [
+          "update_directory_docs",
+          "update_navigation",
+          "update_references"
+        ]
+      }
+    },
+    "content_consistency": {
+      "terminology": {
+        "maintain_glossary": true,
+        "enforce_consistent_terms": true,
+        "spanish_terminology_validation": true,
+        "auto_link_definitions": true
+      },
+      "formatting": {
+        "consistent_heading_levels": true,
+        "standard_code_blocks": true,
+        "consistent_link_formats": true,
+        "standard_table_formats": true
+      },
+      "cross_references": {
+        "auto_generate_toc": true,
+        "maintain_backlinks": true,
+        "validate_internal_links": true,
+        "suggest_related_content": true
+      }
+    },
+    "automation_rules": {
+      "on_decision_create": [
+        "create_from_template",
+        "assign_number",
+        "update_index",
+        "identify_affected_docs",
+        "schedule_updates"
+      ],
+      "on_decision_approve": [
+        "update_status",
+        "propagate_to_affected_docs",
+        "update_implementation_plan",
+        "notify_stakeholders"
+      ],
+      "on_decision_implement": [
+        "update_status_to_implemented",
+        "update_relevant_guides",
+        "validate_consistency",
+        "archive_superseded_content"
+      ],
+      "on_code_change": [
+        "identify_affected_decisions",
+        "update_api_documentation",
+        "validate_examples",
+        "check_guide_accuracy"
+      ]
+    }
+  }
+} 

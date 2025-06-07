@@ -52,11 +52,7 @@ class ScriptManager:
                 'description': 'Run integration tests',
                 'category': 'testing'
             },
-            'reorganize': {
-                'path': 'scripts/development/reorganize.py',
-                'description': 'Reorganize project directory structure',
-                'category': 'development'
-            }
+
         }
 
     def list_scripts(self, category: Optional[str] = None) -> None:

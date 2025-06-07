@@ -6,12 +6,17 @@
       "indent_size": 4,
       "quotes": "double",
       "allow_inline_comments": true,
-      "require_docstrings": true
+      "require_docstrings": true,
+      "formatter": "black",
+      "linter": "flake8",
+      "import_sorter": "isort"
     },
     "typing": {
       "require_type_hints": true,
       "allow_any": false,
-      "check_untyped_defs": true
+      "check_untyped_defs": true,
+      "strict_mode": true,
+      "type_checker": "mypy"
     },
     "imports": {
       "order": [
@@ -20,13 +25,52 @@
         "first_party"
       ],
       "group_by_package": true,
-      "allow_unused_imports": false
+      "allow_unused_imports": false,
+      "max_line_length": 88,
+      "force_single_line": false
     },
     "naming": {
       "functions": "snake_case",
       "variables": "snake_case",
       "classes": "PascalCase",
-      "constants": "UPPER_CASE"
+      "constants": "UPPER_CASE",
+      "modules": "snake_case",
+      "packages": "snake_case"
+    },
+    "error_handling": {
+      "prefer_specific_exceptions": true,
+      "require_logging": true,
+      "avoid_bare_except": true
+    },
+    "project_specific": {
+      "spanish_field_names": [
+        "nombre",
+        "ingredientes",
+        "preparacion",
+        "porciones",
+        "tiempo_preparacion",
+        "dificultad"
+      ],
+      "required_recipe_fields": [
+        "nombre",
+        "ingredientes",
+        "preparacion"
+      ],
+      "logging_format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+      "config_location": "core/config/settings.py"
+    },
+    "documentation": {
+      "docstring_style": "google",
+      "require_module_docstrings": true,
+      "require_class_docstrings": true,
+      "require_function_docstrings": true,
+      "max_function_length": 50
+    },
+    "testing": {
+      "framework": "pytest",
+      "naming_pattern": "test_*.py",
+      "fixture_scope": "function",
+      "mock_external_services": true
     }
   }
 }

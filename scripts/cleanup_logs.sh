@@ -4,8 +4,8 @@
 set -e
 
 # Configuration
-TEST_RESULTS_DIR=".test_results"
-APP_LOGS_DIR=".log"
+TEST_RESULTS_DIR="var/test-results"
+APP_LOGS_DIR="var/logs"
 MAX_TEST_RESULTS_AGE=30  # days
 MAX_APP_LOGS_AGE=7       # days
 MAX_TEST_RESULTS_SIZE=100  # MB

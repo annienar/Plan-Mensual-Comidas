@@ -19,13 +19,25 @@
     },
     "directory_structure": {
       "enforce_structure": true,
+      "unix_compliant": true,
+      "variable_data_location": "var/",
       "required_directories": [
         "core/",
         "tests/",
-        "recetas/sin_procesar/",
-        "recetas/procesadas/Receta Original/",
-        "recetas/procesadas/Recetas JSON/",
-        "recetas/procesadas/Recetas MD/"
+        "recipes/sin_procesar/",
+        "recipes/procesadas/",
+        "recipes/json/",
+        "var/logs/",
+        "var/test-results/",
+        "var/cache/",
+        "scripts/",
+        "docs/"
+      ],
+      "forbidden_patterns": [
+        "*/logs/",
+        "*/test-results/",
+        "*/.log/",
+        "*/.test_results/"
       ]
     },
     "testing": {
@@ -34,6 +46,21 @@
         "unit",
         "integration",
         "recipe_processing"
+      ],
+      "test_organization": {
+        "unit_tests": "tests/unit/",
+        "integration_tests": "tests/integration/",
+        "results_location": "var/test-results/"
+      }
+    },
+    "logging": {
+      "log_location": "var/logs/",
+      "log_rotation": true,
+      "max_log_age_days": 7,
+      "component_logs": [
+        "core.llm.client.log",
+        "notion.sync.log",
+        "phi_operations.log"
       ]
     },
     "documentation": {
@@ -45,7 +72,22 @@
         "Usage",
         "Configuration",
         "Development"
-      ]
+      ],
+      "auto_update": {
+        "directory_structure": "docs/directory-structure.md",
+        "development_guide": "docs/development.md"
+      }
+    },
+    "scripts": {
+      "management_tool": "scripts/manage_scripts.py",
+      "required_categories": [
+        "development",
+        "quality",
+        "monitoring",
+        "maintenance",
+        "testing"
+      ],
+      "archive_obsolete": "scripts/archive/"
     }
   }
 }
