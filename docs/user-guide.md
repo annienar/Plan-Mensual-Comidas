@@ -435,9 +435,10 @@ python -m core.cli cleanup_logs
 - **Processed Recipes**: `recipes/procesadas/`
 - **Final Recipes (JSON)**: `recipes/json/`
 - **Error Recipes**: `recipes/errores/`
-- **Logs**: `logs/`
+- **Logs**: `var/logs/` (consolidated)
+- **Test Results**: `var/test-results/`
 - **Config**: `.env` and `config/`
-- **Cache**: `.cache/` (auto-generated)
+- **Cache**: `var/cache/`
 
 ### Support Checklist
 Before asking for help:

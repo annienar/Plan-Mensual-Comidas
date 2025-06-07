@@ -44,9 +44,9 @@ class NotionSettings(BaseModel):
 class PathSettings(BaseModel):
     """Path settings."""
 
-    LOG_DIR: Path = Field(default=Path("logs"), description="Log directory")
+    LOG_DIR: Path = Field(default=Path("var/logs"), description="Log directory")
     TEST_RESULTS_DIR: Path = Field(
-        default=Path("test_results"), description="Test results directory"
+        default=Path("var/test-results"), description="Test results directory"
     )
     VAR_DIR: Path = Field(default=Path("var"), description="Variable data directory")
 

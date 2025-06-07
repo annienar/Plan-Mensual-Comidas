@@ -45,13 +45,12 @@ plan-mensual-comidas/
 │   ├── production/             # Production config
 │   └── testing/                # Test config
 ├── 💾 var/                       # Variable system data (Unix convention)
-│   ├── logs/                   # Runtime logs
+│   ├── logs/                   # All application & component logs
 │   ├── cache/                  # Application cache
-│   └── test-results/           # Historical test logs
+│   └── test-results/           # Historical test execution logs
 ├── 📜 scripts/                   # Utility scripts & automation
 ├── 📚 docs/                      # Documentation
-├── 🖥️ htmlcov/                   # HTML coverage reports
-└── 📄 logs/                      # Application logs
+└── 🖥️ htmlcov/                   # HTML coverage reports
 ```
 
 ## 🎯 Directory Purpose Guide
@@ -94,9 +93,9 @@ Environment-specific configurations:
 ### 💾 **Variable Data (`var/`)**
 Following Unix conventions for variable data:
 
-- **`logs/`**: Runtime application logs
-- **`cache/`**: Application cache files
-- **`test-results/`**: Historical test execution logs
+- **`logs/`**: All application logs (consolidated from main + component logs)
+- **`cache/`**: Application cache files  
+- **`test-results/`**: Historical test execution logs with timestamps
 
 ## 🚀 Workflow Examples
 
