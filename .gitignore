@@ -52,7 +52,6 @@ logs/
 .env.test.local
 .env.production.local
 
-# Project specific
-data/
+# Project specific  
 output/
 temp/

@@ -374,10 +374,10 @@ export LLM_TIMEOUT=60
 ### Batch Processing
 ```bash
 # Process multiple recipes efficiently
-python -m core.cli batch_process "recipes/*.txt"
+python -m core.cli batch_process "recipes/sin_procesar/*.txt"
 
 # Use parallel processing for large batches
-python -m core.cli batch_process --parallel "recipes/*.txt"
+python -m core.cli batch_process --parallel "recipes/sin_procesar/*.txt"
 ```
 
 ## 🔒 Security & Privacy
@@ -430,7 +430,10 @@ python -m core.cli cleanup_logs
 ```
 
 ### File Locations
-- **Recipes**: `recetas_procesadas/`
+- **Raw Recipes**: `recipes/sin_procesar/`
+- **Processed Recipes**: `recipes/procesadas/`
+- **Final Recipes (JSON)**: `recipes/json/`
+- **Error Recipes**: `recipes/errores/`
 - **Logs**: `logs/`
 - **Config**: `.env` and `config/`
 - **Cache**: `.cache/` (auto-generated)
