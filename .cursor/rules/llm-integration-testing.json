@@ -1,0 +1,117 @@
+{
+  "name": "LLM Integration Testing Requirements",
+  "description": "Specific testing requirements for LLM-related changes and integrations",
+  "rules": [
+    {
+      "rule": "LLM_CHANGE_TESTING_REQUIREMENTS",
+      "description": "Mandatory testing for any LLM-related changes",
+      "test_categories": {
+        "model_switch_testing": [
+          "Test Spanish translation with representative recipes",
+          "Verify timeout behavior with new model", 
+          "Test memory usage and performance regression",
+          "Validate fallback behavior when model unavailable",
+          "Test configuration migration (old vs new model settings)",
+          "Verify commercial license compliance"
+        ],
+        "prompt_change_testing": [
+          "Test with English input → Spanish output validation",
+          "Test with complex recipes (long ingredient lists, multiple steps)",
+          "Test with edge cases (mixed languages, special characters)",
+          "Verify JSON output format consistency",
+          "Test prompt length and token limit handling"
+        ],
+        "spanish_translation_testing": [
+          "Test common ingredient translations (chicken→pollo, etc.)",
+          "Test cooking action translations (heat→calentar, etc.)",
+          "Test unit conversions (cup→taza, tbsp→cda)",
+          "Verify Notion field compatibility (nombre, cantidad, unidad)",
+          "Test translation consistency across different recipes"
+        ],
+        "timeout_configuration_testing": [
+          "Test with different timeout values (30s, 60s, 120s)",
+          "Test timeout handling and graceful degradation",
+          "Test concurrent processing with timeouts",
+          "Verify timeout error messages in Spanish",
+          "Test automatic timeout adjustment for different models"
+        ]
+      }
+    },
+    {
+      "rule": "INTEGRATION_TEST_DATA_REQUIREMENTS",
+      "description": "Standardized test data for LLM integration testing",
+      "test_data_sets": {
+        "small_recipes": {
+          "purpose": "Fast feedback testing",
+          "characteristics": "< 5 ingredients, < 5 steps, basic vocabulary",
+          "languages": ["english", "spanish"],
+          "expected_processing_time": "< 30 seconds"
+        },
+        "medium_recipes": {
+          "purpose": "Standard use case testing", 
+          "characteristics": "5-15 ingredients, 5-10 steps, mixed vocabulary",
+          "languages": ["english", "spanish", "mixed"],
+          "expected_processing_time": "30-60 seconds"
+        },
+        "large_recipes": {
+          "purpose": "Stress testing and performance validation",
+          "characteristics": "> 15 ingredients, > 10 steps, complex instructions",
+          "languages": ["english", "spanish", "mixed"],
+          "expected_processing_time": "60-120 seconds"
+        },
+        "edge_cases": {
+          "purpose": "Error handling and robustness testing",
+          "characteristics": "Special characters, fractions, measurements, abbreviations",
+          "languages": ["english", "spanish", "mixed"],
+          "expected_behavior": "Graceful handling or clear error messages"
+        }
+      }
+    },
+    {
+      "rule": "AUTOMATED_INTEGRATION_TESTING",
+      "description": "Automated testing pipeline for LLM integration changes",
+      "requirements": [
+        "Run full LLM integration test suite before merging changes",
+        "Test with actual LLM models (not mocked) for critical paths",
+        "Validate Spanish output quality with automated checks",
+        "Test timeout and error handling scenarios",
+        "Generate performance reports comparing before/after changes",
+        "Verify backward compatibility with existing recipe data"
+      ],
+      "automation_pipeline": {
+        "pre_commit": "Fast unit tests for LLM components",
+        "pre_merge": "Full integration test suite with actual models",
+        "post_merge": "Performance regression testing",
+        "nightly": "Extended testing with large recipe dataset"
+      },
+      "failure_handling": {
+        "test_failure": "Block merge until tests pass",
+        "performance_regression": "Require justification and approval",
+        "spanish_translation_failure": "Block merge (critical for user experience)",
+        "timeout_test_failure": "Review timeout configuration and retry"
+      }
+    },
+    {
+      "rule": "MANUAL_TESTING_CHECKLIST",
+      "description": "Manual testing checklist for major LLM changes",
+      "manual_tests": [
+        "Upload English recipe → Verify Spanish output in Notion",
+        "Test long recipe processing → Verify completion within timeout",
+        "Test model unavailable scenario → Verify fallback behavior",
+        "Test mixed language recipe → Verify consistent Spanish output",
+        "Test special characters/accents → Verify proper handling",
+        "Test concurrent recipe processing → Verify no interference",
+        "Test error scenarios → Verify Spanish error messages"
+      ],
+      "validation_criteria": {
+        "spanish_quality": "Natural Spanish, not literal translation",
+        "notion_compatibility": "All fields match Spanish Notion schema",
+        "user_experience": "Clear feedback, reasonable processing time",
+        "error_handling": "Graceful degradation, helpful Spanish messages"
+      }
+    }
+  ],
+  "enforcement": "MANDATORY",
+  "created": "2024-current",
+  "rationale": "LLM integration is critical to core functionality. Comprehensive testing prevents regressions and ensures Spanish-only system requirements are met."
+} 

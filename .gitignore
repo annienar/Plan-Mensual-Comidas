@@ -32,23 +32,26 @@ ENV/
 .vscode/
 *.swp
 *.swo
+.DS_Store
 
 # Testing
-.pytest_cache/
 .coverage
 htmlcov/
+.pytest_cache/
 .tox/
+coverage.xml
+*.cover
 
-# Logs and databases
+# Logs
 *.log
-.log/
-*.sqlite3
+logs/
 
-# Project specific - track test files but ignore processed files
-recetas/procesadas/
-# recetas/sin_procesar/*  # Commented out to track test files
-# !recetas/sin_procesar/receta_compleja_para_test.txt  # No longer needed
+# Local development
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
 
-# OS specific
-.DS_Store
-Thumbs.db
+# Project specific  
+output/
+temp/

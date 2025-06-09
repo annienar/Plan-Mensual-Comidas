@@ -1,0 +1,130 @@
+{
+  "issue_resolution_tracking": {
+    "issue_decision_format": {
+      "location": "docs/issues/",
+      "naming_pattern": "YYYY-MM-DD-issue-title.md",
+      "required_sections": [
+        "issue_description",
+        "root_cause_analysis", 
+        "decision_to_resolve",
+        "implementation_plan",
+        "completion_checklist",
+        "verification_steps",
+        "status_tracking"
+      ]
+    },
+    "status_tracking": {
+      "statuses": [
+        "identified",
+        "analyzing", 
+        "plan_created",
+        "in_progress",
+        "needs_verification",
+        "completed",
+        "blocked",
+        "deferred"
+      ],
+      "completion_criteria": {
+        "all_checklist_items_done": true,
+        "verification_steps_passed": true,
+        "no_regression_introduced": true,
+        "documentation_updated": true
+      }
+    },
+    "checklist_management": {
+      "checklist_format": "markdown_checkboxes",
+      "track_completion_percentage": true,
+      "require_assignee_per_item": false,
+      "estimate_effort": true,
+      "track_actual_time": true,
+      "link_to_commits": true
+    },
+    "issue_templates": {
+      "bug_fix": {
+        "sections": [
+          "bug_description",
+          "reproduction_steps", 
+          "root_cause",
+          "fix_plan",
+          "testing_checklist",
+          "deployment_steps"
+        ]
+      },
+      "technical_debt": {
+        "sections": [
+          "debt_description",
+          "impact_analysis",
+          "refactoring_plan", 
+          "migration_steps",
+          "validation_checklist",
+          "cleanup_tasks"
+        ]
+      },
+      "feature_implementation": {
+        "sections": [
+          "feature_requirements",
+          "design_decisions",
+          "implementation_plan",
+          "development_checklist", 
+          "testing_checklist",
+          "documentation_tasks"
+        ]
+      },
+      "performance_issue": {
+        "sections": [
+          "performance_problem",
+          "measurement_baseline",
+          "optimization_plan",
+          "implementation_steps",
+          "performance_validation",
+          "monitoring_setup"
+        ]
+      }
+    },
+    "automation_triggers": {
+      "on_issue_created": {
+        "create_tracking_file": true,
+        "assign_issue_number": true,
+        "notify_stakeholders": false,
+        "link_to_project_backlog": true
+      },
+      "on_checklist_item_completed": {
+        "update_completion_percentage": true,
+        "check_if_ready_for_next_phase": true,
+        "update_project_status": true
+      },
+      "on_issue_completed": {
+        "update_project_metrics": true,
+        "archive_to_completed": true,
+        "update_related_documentation": true,
+        "run_automation_script": "python Documentation/tools/run_automation.py"
+      }
+    },
+    "integration": {
+      "link_to_git_commits": true,
+      "reference_pull_requests": true,
+      "connect_to_test_results": true,
+      "update_project_roadmap": true,
+      "maintain_issue_index": "docs/issues/README.md"
+    },
+    "current_examples": {
+      "pydantic_migration": {
+        "file": "docs/issues/2024-06-07-pydantic-v2-migration.md",
+        "status": "plan_created",
+        "checklist_completion": "0%"
+      },
+      "test_foundation_repair": {
+        "file": "docs/issues/2024-06-07-test-foundation-repair.md", 
+        "status": "plan_created",
+        "checklist_completion": "10%"
+      }
+    },
+    "validation_rules": {
+      "prevent_duplicate_issues": true,
+      "require_clear_acceptance_criteria": true,
+      "mandate_verification_steps": true,
+      "ensure_rollback_plan": true,
+      "link_to_related_decisions": true
+    }
+  }
+} 

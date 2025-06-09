@@ -1,0 +1,260 @@
+{
+  "workflow": {
+    "file_lifecycle": {
+      "creation": {
+        "require_header_comment": true,
+        "template_locations": {
+          "python_module": "templates/python_module.py",
+          "test_file": "templates/test_template.py", 
+          "markdown_doc": "templates/doc_template.md"
+        },
+        "auto_git_add": false,
+        "architecture_compliance": {
+          "check_existing_structure": true,
+          "follow_patterns": {
+            "domain_logic": "core/domain/",
+            "application_logic": "core/application/",
+            "infrastructure": "core/infrastructure/",
+            "processors": "core/domain/recipe/processors/",
+            "extractors": "core/domain/recipe/extractors/",
+            "models": "core/domain/recipe/models/"
+          },
+          "verify_dependencies": "dependencies_point_inward",
+          "naming_conventions": "spanish_field_names"
+        }
+      },
+      "modification": {
+        "update_modified_date": true,
+        "require_changelog_entry": true,
+        "auto_format_on_save": true,
+        "documentation_integration_check": {
+          "mandatory": true,
+          "check_existing_docs_first": true,
+          "prefer_updates_over_creation": true,
+          "decision_tree": {
+            "technical_changes": "docs/development.md",
+            "major_changes": "docs/CHANGELOG-RECENT.md",
+            "feature_changes": "docs/features/",
+            "api_changes": "docs/api.md",
+            "user_guide_updates": "docs/user-guide.md"
+          }
+        }
+      },
+      "archival": {
+        "archive_location": "archive/",
+        "preserve_git_history": true,
+        "document_reason": true,
+        "create_archive_readme": true,
+        "cleanup_requirements": {
+          "remove_temporary_files": true,
+          "consolidate_tests": true,
+          "update_documentation": true,
+          "verify_no_regressions": true
+        }
+      }
+    },
+    "documentation_automation": {
+      "decision_driven_updates": {
+        "single_source_principle": true,
+        "avoid_duplication": true,
+        "central_decisions_location": "docs/decisions/",
+        "decision_format": "ADR",
+        "integration_rules": {
+          "check_existing_first": "MANDATORY - examine docs/ structure before creating new files",
+          "update_over_create": "PREFER - enhance existing documentation over new files",
+          "specific_locations": {
+            "performance_updates": "docs/development.md - Performance Guidelines section",
+            "architecture_changes": "docs/development.md - Architecture Guidelines section",
+            "feature_additions": "docs/features/ - enhance existing feature docs",
+            "major_changes": "docs/CHANGELOG-RECENT.md - add new section at top",
+            "user_workflow": "docs/user-guide.md - enhance existing sections"
+          }
+        }
+      },
+      "triggers": {
+        "decision_made": {
+          "create_decision_record": "docs/decisions/NNNN-title.md",
+          "identify_affected_docs": "auto_detect",
+          "update_affected_sections": true,
+          "validate_consistency": true,
+          "run_script": "python Documentation/tools/run_automation.py"
+        },
+        "directory_structure_change": {
+          "update_files": [
+            "docs/directory-structure.md",
+            "README.md"
+          ],
+          "check_for_duplicates": true,
+          "consolidate_if_needed": true
+        },
+        "api_change": {
+          "update_files": [
+            "docs/api.md",
+            "docs/development.md"
+          ],
+          "auto_generate_from_code": true,
+          "avoid_manual_duplication": true
+        },
+        "recipe_processing_change": {
+          "update_files": [
+            "docs/recipe-processing.md",
+            "docs/llm-integration.md"
+          ],
+          "cross_reference_decisions": true,
+          "maintain_single_source": true
+        },
+        "performance_optimization": {
+          "update_locations": {
+            "primary": "docs/development.md - Performance Guidelines section",
+            "changelog": "docs/CHANGELOG-RECENT.md - new section at top",
+            "user_impact": "docs/user-guide.md - Performance Tips section"
+          },
+          "mandatory_updates": [
+            "performance_targets",
+            "optimization_techniques", 
+            "profiling_commands",
+            "benchmark_results"
+          ]
+        }
+      },
+          "duplication_prevention": {
+      "content_deduplication": true,
+      "use_includes_for_shared_content": true,
+      "maintain_content_registry": true,
+      "validate_cross_references": true,
+      "content_similarity_check": {
+        "threshold": 0.8,
+        "check_on_save": true,
+        "suggest_consolidation": true
+      },
+      "cross_document_analysis": {
+        "track_shared_concepts": true,
+        "maintain_concept_glossary": "docs/glossary.md",
+        "link_related_sections": true,
+        "identify_duplicate_headings": true,
+        "flag_similar_content": true,
+        "suggest_merge_opportunities": true
+      }
+    },
+      "auto_generate": {
+        "api_docs": true,
+        "directory_tree": true,
+        "test_coverage_report": true,
+        "decision_index": true,
+        "content_map": true
+      },
+      "content_consistency": {
+        "terminology": {
+          "maintain_glossary": true,
+          "enforce_consistent_terms": true,
+          "spanish_terminology_validation": true,
+          "auto_link_definitions": true
+        },
+        "formatting": {
+          "consistent_heading_levels": true,
+          "standard_code_blocks": true,
+          "consistent_link_formats": true,
+          "standard_table_formats": true
+        },
+        "cross_references": {
+          "auto_generate_toc": true,
+          "maintain_backlinks": true,
+          "validate_internal_links": true,
+          "suggest_related_content": true
+        }
+      },
+      "decision_tracking": {
+        "central_decisions_file": "docs/decisions/README.md",
+        "decision_format": "ADR",
+        "numbering_scheme": "sequential",
+        "status_values": ["proposed", "accepted", "implemented", "superseded", "deprecated"],
+        "required_fields": [
+          "title", "date", "status", "context", "decision", 
+          "rationale", "consequences", "affected_components"
+        ],
+        "validation": {
+          "prevent_orphaned_decisions": true,
+          "require_impact_documentation": true,
+          "validate_cross_references": true,
+          "check_implementation_status": true
+        }
+      }
+    },
+    "test_enhancement": {
+      "integration_over_creation": {
+        "examine_existing_suites": "MANDATORY - check tests/performance/, tests/unit/, tests/integration/",
+        "enhance_existing_tests": "PREFER - add test methods to existing TestClasses",
+        "temporary_file_policy": {
+          "allowed_for_initial_validation": true,
+          "requires_integration_plan": true,
+          "mandatory_cleanup": true,
+          "cleanup_triggers": ["successful_integration", "end_of_session"]
+        }
+      },
+      "test_organization": {
+        "performance_tests": "tests/performance/test_performance.py - enhance TestPerformance class",
+        "unit_tests": "tests/unit/ - enhance existing test modules",
+        "integration_tests": "tests/integration/ - enhance existing test suites",
+        "fixture_reuse": "tests/fixtures/ - use existing fixtures"
+      },
+      "quality_requirements": {
+        "future_value": "tests must be valuable for regression testing and CI/CD",
+        "comprehensive_coverage": "new functionality requires thorough test coverage",
+        "performance_benchmarks": "performance tests must include benchmark targets",
+        "error_scenarios": "tests must cover error conditions and edge cases"
+      }
+    },
+
+    "large_scale_changes": {
+      "refactoring": {
+        "require_branch": "refactor/*",
+        "require_tests_pass": true,
+        "document_changes": "docs/refactoring-log.md",
+        "backup_before_change": true
+      },
+      "migration": {
+        "create_migration_script": true,
+        "test_rollback": true,
+        "update_documentation": true,
+        "preserve_data": true
+      },
+      "cleanup": {
+        "archive_dont_delete": true,
+        "update_gitignore": true,
+        "run_verification": "python scripts/manage_scripts.py health",
+        "mandatory_checklist": {
+          "temporary_files_removed": true,
+          "tests_integrated": true,
+          "documentation_updated": true,
+          "no_regressions": true,
+          "architecture_compliance": true
+        }
+      }
+    },
+    "implementation_quality_gates": {
+      "pre_completion_checklist": [
+        "verify_architecture_compliance",
+        "ensure_documentation_updated",
+        "confirm_tests_integrated",
+        "cleanup_temporary_files",
+        "validate_no_regressions",
+        "check_performance_impact"
+      ],
+      "documentation_decision_tree": {
+        "technical_implementation": "docs/development.md",
+        "user_facing_changes": "docs/user-guide.md", 
+        "breaking_changes": "docs/CHANGELOG-RECENT.md",
+        "new_features": "docs/features/",
+        "performance_changes": "docs/development.md - Performance Guidelines",
+        "architecture_decisions": "docs/decisions/"
+      },
+      "test_integration_requirements": {
+        "check_existing_test_files": "MANDATORY",
+        "prefer_enhancement": "over new test file creation",
+        "temporary_files": "only for initial validation",
+        "integration_timeline": "within same session",
+        "cleanup_verification": "automated check"
+      }
+    }
+  }
+} 

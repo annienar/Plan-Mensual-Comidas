@@ -1,0 +1,110 @@
+{
+  "name": "Error Handling Consistency",
+  "description": "Rules for consistent, user-friendly error handling across all components",
+  "rules": [
+    {
+      "rule": "SPANISH_ERROR_MESSAGES",
+      "description": "All user-facing error messages must be in Spanish",
+      "requirements": [
+        "Use Spanish error messages for CLI output",
+        "Log user-visible errors in Spanish",
+        "Provide Spanish error descriptions in exception handling",
+        "Use consistent Spanish error terminology across components",
+        "Include helpful Spanish instructions for error resolution"
+      ],
+      "error_message_templates": {
+        "llm_processing_errors": "Error procesando receta con LLM: {details}",
+        "file_processing_errors": "Error leyendo archivo '{filename}': {reason}",
+        "timeout_errors": "Tiempo de espera agotado para {operation} ({timeout}s)",
+        "validation_errors": "Error de validación en {field}: {expected_format}",
+        "notion_sync_errors": "Error sincronizando con Notion: {details}",
+        "model_unavailable_errors": "Modelo {model_name} no disponible: {fallback_action}",
+        "spanish_translation_errors": "Error traduciendo a español: {source_text}"
+      },
+      "forbidden_english_errors": [
+        "Error processing recipe",
+        "File not found", 
+        "Timeout occurred",
+        "Invalid input",
+        "Model not available"
+      ]
+    },
+    {
+      "rule": "GRACEFUL_DEGRADATION_PATTERNS",
+      "description": "Implement consistent graceful degradation when components fail",
+      "degradation_strategies": {
+        "llm_model_failure": {
+          "primary_action": "Try fallback model (moondream2)",
+          "secondary_action": "Use basic text extraction",
+          "user_message": "Modelo principal no disponible, usando modelo alternativo",
+          "logging": "Log primary failure reason and fallback success/failure"
+        },
+        "notion_api_failure": {
+          "primary_action": "Save to local JSON file",
+          "secondary_action": "Retry with exponential backoff", 
+          "user_message": "Notion temporalmente no disponible, guardando localmente",
+          "logging": "Log API error details and local save location"
+        },
+        "timeout_failure": {
+          "primary_action": "Increase timeout and retry once",
+          "secondary_action": "Fail gracefully with partial results",
+          "user_message": "Procesamiento lento, reintentando con más tiempo",
+          "logging": "Log timeout duration and retry outcome"
+        },
+        "spanish_translation_failure": {
+          "primary_action": "Use original text with language detection",
+          "secondary_action": "Mark for manual review",
+          "user_message": "Traducción automática falló, revisar manualmente",
+          "logging": "Log translation failure and original text"
+        }
+      }
+    },
+    {
+      "rule": "ERROR_LOGGING_STANDARDS",
+      "description": "Consistent error logging for debugging and monitoring",
+      "requirements": [
+        "Log all errors with structured format (timestamp, component, error_type, details)",
+        "Include context information (model used, input size, configuration)",
+        "Log error resolution attempts and outcomes",
+        "Use consistent log levels (ERROR for failures, WARN for degradation)",
+        "Include unique error IDs for tracking related issues"
+      ],
+      "log_format": {
+        "timestamp": "ISO 8601 format",
+        "component": "core.llm, core.notion, core.recipe",
+        "error_type": "timeout, validation, model_failure, api_error",
+        "error_id": "UUID for tracking",
+        "user_impact": "high, medium, low, none",
+        "resolution_attempted": "fallback, retry, manual_intervention",
+        "spanish_message": "User-facing Spanish error message"
+      }
+    },
+    {
+      "rule": "USER_FEEDBACK_REQUIREMENTS",
+      "description": "Provide helpful feedback to users when errors occur",
+      "requirements": [
+        "Always explain what went wrong in simple Spanish terms",
+        "Provide specific next steps the user can take",
+        "Indicate if the system is retrying automatically",
+        "Show progress for long-running operations that might timeout",
+        "Offer alternative approaches when primary method fails"
+      ],
+      "feedback_examples": {
+        "good": [
+          "Error procesando receta. Reintentando con modelo alternativo...",
+          "Archivo demasiado grande. Intente con archivo más pequeño (< 10MB)",
+          "Conexión con Notion falló. Receta guardada localmente en: recipes/json/"
+        ],
+        "bad": [
+          "Error occurred",
+          "Processing failed", 
+          "Unknown error",
+          "Internal server error"
+        ]
+      }
+    }
+  ],
+  "enforcement": "MANDATORY",
+  "created": "2024-current",
+  "rationale": "Consistent error handling improves user experience, aids debugging, and maintains Spanish-only system requirements."
+} 

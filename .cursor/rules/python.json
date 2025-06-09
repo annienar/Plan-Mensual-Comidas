@@ -6,12 +6,32 @@
       "indent_size": 4,
       "quotes": "double",
       "allow_inline_comments": true,
-      "require_docstrings": true
+      "require_docstrings": true,
+      "formatter": "black",
+      "linter": "flake8",
+      "import_sorter": "isort",
+      "enforcement": {
+        "pre_commit_formatting": true,
+        "block_merge_on_style_violations": true,
+        "auto_format_on_save": true
+      }
     },
     "typing": {
       "require_type_hints": true,
       "allow_any": false,
-      "check_untyped_defs": true
+      "check_untyped_defs": true,
+      "strict_mode": true,
+      "type_checker": "mypy",
+      "enforcement": {
+        "block_commits_without_types": true,
+        "validate_return_types": true,
+        "validate_parameter_types": true,
+        "specific_validations": {
+          "recipe_models": "all fields must have Spanish type annotations",
+          "processor_methods": "must return typed Recipe objects",
+          "extractor_methods": "must specify input/output types"
+        }
+      }
     },
     "imports": {
       "order": [
@@ -20,13 +40,127 @@
         "first_party"
       ],
       "group_by_package": true,
-      "allow_unused_imports": false
+      "allow_unused_imports": false,
+      "max_line_length": 88,
+      "force_single_line": false,
+      "enforcement": {
+        "auto_sort_on_save": true,
+        "validate_import_order": true,
+        "prevent_circular_imports": true
+      }
     },
     "naming": {
       "functions": "snake_case",
       "variables": "snake_case",
       "classes": "PascalCase",
-      "constants": "UPPER_CASE"
+      "constants": "UPPER_CASE",
+      "modules": "snake_case",
+      "packages": "snake_case",
+      "project_specific_naming": {
+        "processor_classes": {
+          "pattern": "*Processor",
+          "location": "core/domain/recipe/processors/",
+          "validation": "must inherit from base processor"
+        },
+        "extractor_classes": {
+          "pattern": "*Extractor", 
+          "location": "core/domain/recipe/extractors/",
+          "validation": "must implement extract method"
+        }
+      }
+    },
+    "error_handling": {
+      "prefer_specific_exceptions": true,
+      "require_logging": true,
+      "avoid_bare_except": true,
+      "project_specific_exceptions": {
+        "recipe_processing": "RecipeProcessingError",
+        "llm_operations": "LLMError",
+        "notion_sync": "NotionSyncError",
+        "validation": "ValidationError"
+      },
+      "enforcement": {
+        "validate_exception_types": true,
+        "require_error_logging": true
+      }
+    },
+    "project_specific": {
+      "logging_format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+      "config_location": "core/config/settings.py",
+              "validation_rules": {
+        "architecture_compliance": {
+          "domain_models": "no external dependencies allowed",
+          "processors": "only domain dependencies allowed", 
+          "infrastructure": "can depend on domain and application"
+        },
+        "test_file_naming": {
+          "pattern": "test_*.py",
+          "location_rules": {
+            "performance_tests": "tests/performance/",
+            "unit_tests": "tests/unit/",
+            "integration_tests": "tests/integration/"
+          }
+        }
+      }
+    },
+    "documentation": {
+      "docstring_style": "google",
+      "require_module_docstrings": true,
+      "require_class_docstrings": true,
+      "require_function_docstrings": true,
+      "max_function_length": 50,
+      "project_specific_docs": {
+        "performance_notes": "document expected processing times",
+        "code_examples": "include practical code examples in docs"
+      }
+    },
+    "testing": {
+      "framework": "pytest",
+      "naming_pattern": "test_*.py",
+      "fixture_scope": "function",
+      "mock_external_services": true,
+      "testing_rules": {
+        "enhance_existing_tests": {
+          "priority": "MANDATORY",
+          "action": "add methods to existing TestClasses",
+          "avoid": "creating new test files unnecessarily"
+        },
+        "temporary_test_policy": {
+          "allowed": "only for initial validation",
+          "cleanup": "mandatory within same session",
+          "integration": "must integrate into existing test suites"
+        }
+      }
+    },
+    "performance": {
+      "optimization_rules": {
+        "cache_llm_responses": "mandatory for similar content",
+        "minimize_external_calls": "batch operations when possible", 
+        "memory_management": "cleanup after processing",
+        "timeout_handling": "fail fast with appropriate timeouts"
+      },
+      "monitoring": {
+        "log_processing_times": true,
+        "track_memory_usage": true,
+        "monitor_cache_hit_rates": true,
+        "alert_on_performance_regression": true
+      }
+    },
+    "quality_gates": {
+      "pre_commit_validation": [
+        "python_style_compliance",
+        "type_hint_coverage", 
+        "import_order_validation",
+        "docstring_presence"
+      ],
+      "architecture_validation": [
+        "dependency_direction_check",
+        "circular_import_detection"
+      ],
+      "automated_checks": {
+        "architecture_compliance": "python scripts/validate_architecture.py",
+        "test_integration_check": "python scripts/check_test_integration.py"
+      }
     }
   }
 }

@@ -1,0 +1,126 @@
+{
+  "name": "Decision Review Process",
+  "description": "Mandatory review of architecture and documentation before major decisions",
+  "rules": [
+    {
+      "rule": "ARCHITECTURE_REVIEW_BEFORE_CHANGES",
+      "description": "Always review current architecture before making significant changes",
+      "requirements": [
+        "Read docs/directory-structure.md to understand current architecture",
+        "Review docs/development.md for established patterns",
+        "Check core/ structure (domain/application/infrastructure) before changes",
+        "Understand existing workflows in docs/llm.md, docs/notion.md",
+        "Review related cursor rules before proposing new approaches"
+      ],
+      "contextual_analysis_required": {
+        "codebase_review": [
+          "examine_directory_structure",
+          "identify_existing_patterns",
+          "review_current_implementation",
+          "check_coding_standards_in_use",
+          "analyze_test_coverage_approach"
+        ],
+        "roadmap_alignment": [
+          "review_project_goals",
+          "check_planned_features",
+          "identify_technical_priorities",
+          "understand_timeline_constraints",
+          "validate_scope_appropriateness"
+        ],
+        "architecture_context": [
+          "understand_current_tech_stack",
+          "identify_integration_points",
+          "review_data_flow",
+          "check_performance_requirements",
+          "analyze_scalability_needs"
+        ],
+        "domain_specific": [
+          "review_spanish_field_naming_pattern",
+          "check_current_llm_models_in_use",
+          "understand_recipe_processing_pipeline", 
+          "analyze_pantry_integration_roadmap",
+          "check_notion_integration_patterns",
+          "validate_commercial_licensing_requirements"
+        ],
+        "tools_to_use": [
+          "codebase_search",
+          "file_search", 
+          "grep_search",
+          "read_file",
+          "list_dir"
+        ]
+      },
+      "mandatory_before": [
+        "Model changes (switching LLM models)",
+        "Architecture modifications (adding new layers, changing patterns)",
+        "Language processing changes (translation rules, multi-language)",
+        "Configuration changes (timeouts, parameters)",
+        "New tool or dependency additions",
+        "Major workflow changes (processing pipeline modifications)"
+      ]
+    },
+    {
+      "rule": "DOCUMENTATION_REVIEW_BEFORE_DECISIONS",
+      "description": "Review existing documentation to understand current state and decisions",
+      "requirements": [
+        "Review docs/llm/context.md for LLM-related changes",
+        "Check docs/CHANGELOG-RECENT.md for recent decisions and rationale",
+        "Read relevant docs/ files before proposing contradictory approaches",
+        "Understand commercial licensing requirements in docs/llm.md",
+        "Review project roadmap and current status in documentation"
+      ],
+      "search_required": [
+        "Use codebase_search to find existing implementations",
+        "Use grep_search to find related patterns and configurations", 
+        "Use file_search to locate relevant files and modules",
+        "Read related files with read_file before making recommendations"
+      ]
+    },
+    {
+      "rule": "IMPACT_ANALYSIS_REQUIRED",
+      "description": "Analyze impact of major changes before implementation",
+      "requirements": [
+        "Identify what systems will be affected by the change",
+        "Review test coverage for areas being changed",
+        "Consider backward compatibility and migration requirements",
+        "Analyze performance implications (timeouts, resource usage)",
+        "Check commercial licensing implications for new dependencies",
+        "Document rationale for major decisions in changelog"
+      ],
+      "triggers": [
+        "Model switches (Phi → LLaVA-Phi3 type changes)",
+        "Language processing changes (Spanish-only decisions)",
+        "New external dependencies or tools",
+        "Configuration parameter changes",
+        "Architecture pattern modifications",
+        "Processing pipeline changes"
+      ]
+    },
+    {
+      "rule": "ALTERNATIVE_ANALYSIS",
+      "description": "Consider alternatives and justify chosen approach",
+      "requirements": [
+        "Document why current approach isn't sufficient",
+        "List evaluated alternatives and why they were rejected",
+        "Explain trade-offs of chosen solution",
+        "Consider smaller, incremental changes vs. major rewrites",
+        "Validate that change aligns with project goals and constraints"
+      ]
+    }
+  ],
+  "enforcement": "MANDATORY",
+  "created": "2024-current",
+  "rationale": "Prevents hasty decisions that break existing architecture or contradict established patterns. Ensures changes are well-informed and documented. Would have helped with LLM model evaluation and Spanish-only translation decisions.",
+  "examples": {
+    "good_process": [
+      "Review docs/llm.md before proposing model changes",
+      "Check existing Spanish field patterns before language changes",
+      "Read current architecture docs before adding new components"
+    ],
+    "violations": [
+      "Switching models without reviewing current setup",
+      "Adding new translation rules without checking existing patterns",
+      "Creating new files without following architectural guidelines"
+    ]
+  }
+} 

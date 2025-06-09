@@ -1,6 +1,7 @@
-import pytest
+from core.config import config
 from pathlib import Path
-from core.utils import config
+
+import pytest
 
 def test_constants():
     assert config.PROJECT_NAME == "Plan Mensual Comidas"
@@ -20,4 +21,4 @@ def test_get_file_type():
     assert config.get_file_type(Path("file.txt")) == "text"
     assert config.get_file_type(Path("file.pdf")) == "pdf"
     assert config.get_file_type(Path("file.png")) == "image"
-    assert config.get_file_type(Path("file.exe")) == "unknown" 
+    assert config.get_file_type(Path("file.exe")) == "unknown"

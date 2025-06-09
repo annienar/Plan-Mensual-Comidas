@@ -1,0 +1,71 @@
+{
+  "name": "File Management and Code Organization",
+  "description": "Rules for responsible file management and avoiding unnecessary file creation",
+  "rules": [
+    {
+      "rule": "AVOID_UNNECESSARY_FILES",
+      "description": "Before creating any new file, always check if existing files can be improved instead",
+      "requirements": [
+        "Search for existing modules/files that serve similar purposes",
+        "Use edit_file or search_replace to modify existing code",
+        "Only create new files when genuinely necessary for the architecture",
+        "Never create temporary test files without explicit user request",
+        "Delete temporary files immediately after use if created"
+      ]
+    },
+    {
+      "rule": "PREFER_EXISTING_MODULES",
+      "description": "Always prefer enhancing existing modules over creating new ones",
+      "requirements": [
+        "Use grep_search and codebase_search to find existing implementations",
+        "Review existing file structure before proposing new files",
+        "Consolidate similar functionality into existing modules",
+        "Extend existing classes rather than creating new ones when possible"
+      ]
+    },
+    {
+      "rule": "TEMPORARY_FILE_MANAGEMENT",
+      "description": "Strict rules for temporary files and scripts",
+      "requirements": [
+        "Only create temporary files with explicit user permission",
+        "Always specify cleanup plan when creating temporary files",
+        "Use descriptive names that indicate temporary nature (temp_, test_, debug_)",
+        "Clean up immediately after use or at end of session",
+        "Document why temporary file is necessary vs. existing alternatives"
+      ]
+    },
+    {
+      "rule": "CODE_CONSOLIDATION",
+      "description": "Prefer consolidation over proliferation",
+      "requirements": [
+        "Look for duplicate functionality across files",
+        "Merge similar classes and functions when possible",
+        "Use existing configuration systems rather than creating new ones",
+        "Extend existing prompt systems rather than creating new prompt files",
+        "Reuse existing error handling and logging patterns"
+      ]
+    },
+    {
+      "rule": "LLM_CONTEXT_UPDATES",
+      "description": "Always update LLM context documentation when making significant changes",
+      "requirements": [
+        "Update docs/llm/context.md whenever model configurations change",
+        "Document language handling changes in LLM context file",
+        "Add new model migrations and deprecations to context",
+        "Include configuration changes that affect future LLM usage",
+        "Update processing capabilities and requirements in context",
+        "Ensure future LLMs understand critical system constraints and decisions"
+      ],
+      "triggers": [
+        "LLM model changes (switching models, deprecating models)",
+        "Language processing changes (Spanish-only, translation rules)",
+        "Configuration updates (timeouts, prompts, parameters)",
+        "Architecture changes affecting LLM integration",
+        "Commercial licensing changes for models"
+      ]
+    }
+  ],
+  "enforcement": "STRICT",
+  "created": "2024-12-20",
+  "rationale": "Prevents codebase bloat, maintains clean project structure, and ensures future LLM context is always current"
+} 
