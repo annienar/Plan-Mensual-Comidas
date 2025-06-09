@@ -1,5 +1,37 @@
 # LLM Integration Guide: Plan Mensual Comidas
 
+## 📋 LLM Usage Rules & Policy
+
+### **MANDATORY REQUIREMENTS**
+> 🚨 **CRITICAL**: All LLM models MUST comply with these rules for commercial deployment
+
+#### **Rule 1: Open-Source Commercial License Only**
+- ✅ **REQUIRED**: MIT License or Apache 2.0 License
+- ❌ **FORBIDDEN**: Custom licenses with commercial restrictions
+- ❌ **FORBIDDEN**: Proprietary models (GPT, Claude, etc.)
+- ❌ **FORBIDDEN**: Models requiring royalties or usage fees
+
+#### **Rule 2: Model Preference Hierarchy** (Updated Recent Changes)
+1. **LLaVA-Phi3 (PRIMARY CHOICE)** - MIT License (Superior Spanish support + Vision)
+2. **Phi (Deprecated)** - MIT License (Poor Spanish performance)
+3. **Moondream 2** - Apache 2.0 (Vision tasks backup only)
+
+#### **Rule 3: Deployment Requirements**
+- ✅ **Local Processing Only**: All inference must run locally via Ollama
+- ✅ **No External APIs**: Zero data sent to third-party LLM services
+- ✅ **Commercial Compliance**: Full rights for commercial distribution
+- ✅ **Self-Contained**: No external dependencies for core LLM functionality
+
+#### **Rule 4: Rejected Models**
+| Model Family | Reason for Rejection | Alternative |
+|-------------|---------------------|-------------|
+| Llama (all versions) | Custom license restrictions | **Phi** |
+| GPT (OpenAI) | Proprietary, API costs | **Phi** |
+| Claude (Anthropic) | Proprietary, API costs | **Phi** |
+| Gemini (Google) | Proprietary, API costs | **Phi** |
+
+---
+
 ## 🎯 Overview
 
 This document covers the complete LLM integration strategy for Plan Mensual Comidas, including model selection, implementation details, and commercial licensing compliance.
@@ -9,11 +41,11 @@ This document covers the complete LLM integration strategy for Plan Mensual Comi
 ### **Critical Requirement: Commercial Compliance**
 All LLM models must use **MIT or Apache 2.0 licenses** for commercial deployment without royalties or restrictions.
 
-### **Approved Models**
+### **Approved Models** (Updated Recent Changes)
 | Model | License | Size | Primary Use | Status |
 |-------|---------|------|-------------|---------|
-| **Phi** | MIT | 1.6GB | Text processing | ✅ Active |
-| **LLaVA-Phi3** | MIT | 3.8GB | Multimodal (images/PDFs) | 🔄 Integrating |
+| **LLaVA-Phi3** | MIT | 2.9GB | Primary model (Spanish + Vision) | ✅ **ACTIVE** |
+| **Phi** | MIT | 1.6GB | ~~Text processing~~ | ❌ **DEPRECATED** (Poor Spanish) |
 | **Moondream 2** | Apache 2.0 | 1.7GB | Multimodal backup | 📦 Available |
 
 ### **Rejected Models** ❌

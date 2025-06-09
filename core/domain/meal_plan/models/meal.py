@@ -39,7 +39,7 @@ class Meal(BaseModel):
 )
     recipes: List[Recipe] = Field(
         ..., 
-        min_items = 1, 
+        min_length= 1, 
         description="Lista de recetas"
 )
     notes: Optional[str] = Field(

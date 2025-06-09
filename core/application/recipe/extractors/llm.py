@@ -10,28 +10,56 @@ from core.utils.logger import get_logger
 from typing import Dict, List, Any, Optional
 import json
 from datetime import datetime
+import time
+import logging
 
-logger = get_logger(__name__)
+logger = logging.getLogger(__name__)
+
+# Performance metrics for llava-phi3 optimization
+PERFORMANCE_METRICS = {
+    'extraction_times': [],
+    'prompt_lengths': [],
+    'success_rate': 0,
+    'cache_hits': 0
+}
 
 class LLMExtractor(BaseExtractor):
-    """LLM-based recipe extractor using Ollama with Phi model."""
+    """LLM-based recipe extractor using llava-phi3 with configurable language support."""
 
-    def __init__(self, llm_client: Optional[LLMClient] = None) -> None:
+    def __init__(self, llm_client: Optional[LLMClient] = None, language: str = "spanish") -> None:
         """Initialize the LLM extractor with an optional LLM client."""
-        self.llm_client = llm_client or LLMClient(model="phi")
-        self.system_prompt = """You are a recipe extraction expert specializing in Spanish cuisine. Your task is to analyze recipe text and extract structured information. 
+        # Use longer timeout for llava-phi3 model
+        self.llm_client = llm_client or LLMClient(model="llava-phi3", timeout=120)
+        self.language = language  # Always "spanish" for this system
+        
+        # System always forces Spanish translation for consistency
+        self.system_prompt = """Eres un experto en extracción de recetas que SIEMPRE traduce todo al español. Tu tarea es analizar cualquier texto de receta (en cualquier idioma) y extraer información estructurada completamente en español.
 
-IMPORTANT TRANSLATION REQUIREMENTS:
-- If the recipe text contains ANY content in English, translate it to Spanish
-- ALL extracted content must be in Spanish (titles, ingredients, instructions, notes)
-- Maintain culinary authenticity and proper Spanish terminology
-- Use proper Spanish cooking terms and measurements when applicable
-- Always respond with valid JSON only."""
+TRADUCCIÓN OBLIGATORIA:
+- TODO el contenido debe estar en español, sin excepción
+- Traduce ingredientes: "chicken" → "pollo", "beef" → "carne", "onion" → "cebolla"
+- Traduce instrucciones: "Heat the pan" → "Calentar la sartén", "Mix well" → "Mezclar bien"
+- Traduce títulos: "Chicken Soup" → "Sopa de Pollo", "Beef Stew" → "Estofado de Carne"
+- Usa terminología culinaria española auténtica
+- Propiedades para Notion: nombre, porciones, calorias, dificultad (en español)
+- Unidades en español: taza, cda, cdta, g, kg, ml, l
+- Responde únicamente con JSON válido en español"""
+
+    @classmethod
+    def for_notion(cls) -> 'LLMExtractor':
+        """Create an extractor for Notion integration (always Spanish)."""
+        return cls(language="spanish")
+    
+    @classmethod  
+    def create(cls) -> 'LLMExtractor':
+        """Create a standard extractor (always Spanish)."""
+        return cls(language="spanish")
 
     async def extract_recipe(self, text: str) -> Recipe:
-        """Extract recipe information using LLM."""
+        """Extract recipe information using optimized llava-phi3."""
+        start_time = time.time()
         try:
-            # Use the structured completion method for better JSON handling
+            # Use optimized structured completion for llava-phi3
             data = await self.llm_client.get_structured_completion(
                 prompt=self._build_extraction_prompt(text),
                 required_fields=['title', 'ingredients', 'instructions'],
@@ -40,53 +68,57 @@ IMPORTANT TRANSLATION REQUIREMENTS:
                 system_prompt=self.system_prompt
             )
             
+            # Track performance metrics
+            extraction_time = time.time() - start_time
+            logger.info(f"llava-phi3 extraction completed in {extraction_time:.2f}s")
+            
             return self._create_recipe_from_data(data)
             
         except Exception as e:
-            logger.error(f'Error in LLM extraction: {str(e)}')
+            extraction_time = time.time() - start_time
+            logger.error(f'llava-phi3 extraction failed after {extraction_time:.2f}s: {str(e)}')
             raise RecipeError(f'Failed to extract recipe: {str(e)}')
 
     def _build_extraction_prompt(self, text: str) -> str:
-        """Build the extraction prompt for the LLM."""
-        return f"""Extract recipe information from the following text and return it as JSON with this exact structure:
+        """Build Spanish-only extraction prompt for llava-phi3."""
+        
+        return f"""Extrae información de esta receta y devuelve TODO en español:
 
 {{
-  "title": "Recipe title",
+  "title": "Título en Español",
   "servings": 4,
   "prep_time": 15,
   "cook_time": 30,
-  "difficulty": "easy/medium/hard",
+  "difficulty": "fácil",
   "calories": 250,
-  "tags": ["tag1", "tag2"],
+  "tags": ["etiqueta1", "etiqueta2"],
   "ingredients": [
     {{
-      "name": "ingredient name",
+      "name": "nombre en español",
       "quantity": 2.0,
-      "unit": "cups",
-      "category": "vegetable/protein/grain/dairy/spice/other"
+      "unit": "taza",
+      "category": "proteína"
     }}
   ],
   "instructions": [
-    "Step 1 description",
-    "Step 2 description"
+    "Paso 1 en español",
+    "Paso 2 en español"
   ],
-  "notes": "Any additional notes or tips"
+  "notes": "Notas en español"
 }}
 
-Recipe text:
+Texto de receta (puede estar en cualquier idioma):
 {text}
 
-Important:
-- **TRANSLATE TO SPANISH**: If any content is in English, translate it to Spanish. Examples:
-  * "chicken" → "pollo", "beef" → "carne", "onion" → "cebolla"
-  * "Preheat oven" → "Precalentar horno"
-  * "Mix ingredients" → "Mezclar ingredientes"
-- Extract exact ingredient quantities and convert fractions to decimals (1/2 = 0.5, 1 1/2 = 1.5)
-- Normalize units to standard forms (tbsp, tsp, cup, oz, lb, kg, g, ml, l)
-- Categorize ingredients appropriately
-- Keep instructions as separate, clear steps
-- If information is missing, use reasonable defaults
-- Ensure all numeric fields are numbers, not strings"""
+REGLAS DE TRADUCCIÓN:
+- SIEMPRE traduce TODO al español, sin excepción
+- Ingredientes: chicken→pollo, beef→carne, onion→cebolla, garlic→ajo, oil→aceite
+- Acciones: heat→calentar, mix→mezclar, add→agregar, cook→cocinar, serve→servir
+- Unidades: cup→taza, tbsp→cda, tsp→cdta, lb→libra, oz→onza
+- Convierte fracciones a decimales (1/2 = 0.5)
+- Categorías: proteína, vegetal, grano, lácteo, especia, condimento, otro
+- Dificultad: fácil, media, difícil
+- Instrucciones claras y numeradas en español"""
 
     def _create_recipe_from_data(self, data: Dict[str, Any]) -> Recipe:
         """Create a Recipe object from LLM extraction data."""
@@ -201,56 +233,50 @@ Important:
             return self._get_fallback_result(text, str(e))
 
     def _build_detailed_prompt(self, text: str) -> str:
-        """Build a detailed extraction prompt."""
-        return f"""Extract complete recipe information from the following text and return it as JSON:
+        """Build Spanish-only detailed prompt for llava-phi3."""
+        
+        return f"""Extrae información completa de esta receta y traduce TODO al español:
 
 {{
   "metadata": {{
-    "title": "Recipe title",
+    "title": "Título atractivo en español",
     "servings": 4,
     "prep_time": 15,
     "cook_time": 30,
-    "difficulty": "easy",
+    "difficulty": "fácil",
     "calories": 250,
-    "tags": ["main dish", "vegetarian"],
-    "notes": "Additional notes"
+    "tags": ["plato principal", "vegetariano"],
+    "notes": "Notas adicionales"
   }},
   "ingredients": [
     {{
-      "name": "ingredient name",
+      "name": "nombre ingrediente en español",
       "quantity": 2.0,
-      "unit": "cups",
-      "category": "vegetable",
-      "notes": "optional preparation notes"
+      "unit": "taza",
+      "category": "vegetal",
+      "notes": "notas preparación"
     }}
   ],
   "instructions": [
-    "Step 1: Detailed instruction",
-    "Step 2: Next step"
+    "Paso 1: Instrucción detallada",
+    "Paso 2: Siguiente paso"
   ]
 }}
 
-Recipe text:
+Texto de receta (cualquier idioma):
 {text}
 
-Guidelines:
-- **MANDATORY TRANSLATION**: If the recipe contains ANY English text, translate ALL content to Spanish:
-  * Ingredients: "chicken breast" → "pechuga de pollo", "olive oil" → "aceite de oliva"
-  * Instructions: "Heat the pan" → "Calentar la sartén", "Season with salt" → "Sazonar con sal"
-  * Titles: "Chicken Soup" → "Sopa de Pollo", "Beef Stew" → "Estofado de Carne"
-  * Use proper Spanish culinary terminology
-- **TITLE CREATION**: If no clear title is provided, create an appealing and descriptive title based on the main ingredients and cooking method. Examples:
-  * "Chicken with rice" → "Pollo con Arroz al Cilantro"
-  * "Pasta with tomatoes" → "Pasta con Tomates Frescos"
-  * "Soup with vegetables" → "Sopa de Verduras Casera"
-  * Use Spanish titles when appropriate, make them appetizing and specific
-- Convert all fractions to decimals (1/2 = 0.5, 2 1/3 = 2.33)
-- Use standard units: tsp, tbsp, cup, oz, lb, kg, g, ml, l
-- Categories: vegetable, fruit, protein, grain, dairy, spice, condiment, other
-- Split multi-sentence instructions into separate steps
-- Use "easy", "medium", or "hard" for difficulty
-- Extract realistic calorie estimates if mentioned
-- Always provide a meaningful, appetizing title even if the original text doesn't have one"""
+REGLAS DE TRADUCCIÓN FORZADA:
+- SIEMPRE traduce TODO al español, sin excepción
+- Ingredientes: chicken→pollo, beef→carne, onion→cebolla, garlic→ajo, oil→aceite, salt→sal, pepper→pimienta
+- Verbos: heat→calentar, mix→mezclar, add→agregar, cook→cocinar, serve→servir, cut→cortar, season→sazonar
+- Títulos creativos: "Chicken Rice"→"Pollo con Arroz al Cilantro", "Beef Stew"→"Estofado de Carne con Vegetales"
+- Unidades: cup→taza, tbsp→cda, tsp→cdta, lb→libra, oz→onza
+- Fracciones a decimales: 1/2=0.5, 1/4=0.25, 3/4=0.75
+- Categorías: vegetal, fruta, proteína, grano, lácteo, especia, condimento, otro
+- Instrucciones separadas y detalladas en español
+- Dificultad: fácil/media/difícil
+- Título siempre atractivo y específico en español"""
 
     def _get_fallback_result(self, content: str = '', reason: str = 'Unknown error') -> Dict[str, Any]:
         """Return a fallback result when LLM extraction fails."""

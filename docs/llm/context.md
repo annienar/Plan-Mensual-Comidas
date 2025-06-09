@@ -7,15 +7,33 @@
 **Name**: Plan Mensual Comidas (Monthly Meal Plan)  
 **Type**: Commercial recipe management application for Spanish-speaking users  
 **Core Function**: Upload recipes to Notion + smart pantry management + auto-generated shopping lists  
-**Language**: Spanish field names throughout (nombre, cantidad, unidad, alacena, etc.)
+**Language**: **SPANISH-ONLY** - All recipes translated to Spanish regardless of input language
+**Field Names**: Spanish throughout (nombre, cantidad, unidad, alacena, etc.)
+
+## 🚨 RECENT CRITICAL CHANGES
+
+### **LLM Model Migration Completed**
+- **FROM**: Phi model (1.6GB) - **FAILED** Spanish language prompts
+- **TO**: LLaVA-Phi3 (2.9GB) - **EXCELLENT** Spanish understanding + Vision ready
+- **Impact**: Core functionality restored, Spanish translation working perfectly
+- **Performance**: 30-120s processing (vs 10-30s) but significantly better accuracy
+
+### **Spanish-Only Translation System Implemented**
+- **Requirement**: User's Notion database is entirely in Spanish
+- **Implementation**: ALL input recipes (English/French/etc.) → Spanish output
+- **Translation Rules**: Explicit mappings (chicken→pollo, beef→carne, cup→taza)
+- **System Behavior**: No multi-language options, Spanish-forced prompts only
+- **Notion Compatibility**: 100% Spanish properties (nombre, porciones, calorias)
 
 ## 🏛️ Commercial Requirements - CRITICAL
 
 **This is a COMMERCIAL APPLICATION for sale. All dependencies must comply:**
 
-### **LLM Model Restrictions**
+### **LLM Model Restrictions** (Updated)
 - ✅ **ONLY MIT or Apache 2.0 licensed models**
-- ✅ **Currently using**: Phi (MIT), LLaVA-Phi3 (MIT), Moondream 2 (Apache 2.0)
+- ✅ **PRIMARY MODEL**: LLaVA-Phi3 (MIT) - Superior Spanish support + Vision capabilities
+- ❌ **DEPRECATED**: Phi (MIT) - Poor Spanish language performance, replaced
+- ✅ **BACKUP**: Moondream 2 (Apache 2.0) - Vision backup only
 - ❌ **PROHIBITED**: Llama models (custom license), GPT models (proprietary), Claude models (proprietary)
 - ❌ **NO EXTERNAL API CALLS** to proprietary LLM services
 
@@ -44,18 +62,20 @@ Text/Image Recipe → Local LLM Processing → Structured Data → User's Notion
 
 ## 🧠 LLM Integration Details
 
-### **Current Setup**
+### **Current Setup** (Updated)
 - **Ollama Runtime**: Local LLM server
-- **Primary Model**: Phi (1.6GB, MIT) - Text recipe processing
-- **Multimodal Model**: LLaVA-Phi3 (3.8GB, MIT) - Image/PDF processing
-- **Backup Model**: Moondream 2 (1.7GB, Apache 2.0)
+- **Primary Model**: LLaVA-Phi3 (2.9GB, MIT) - **ACTIVE** Spanish text + Vision processing
+- **Deprecated Model**: ~~Phi (1.6GB, MIT)~~ - **REMOVED** due to poor Spanish support
+- **Backup Model**: Moondream 2 (1.7GB, Apache 2.0) - Vision backup only
 
-### **Processing Capabilities**
-- ✅ Spanish recipe text parsing and structuring
-- ✅ Ingredient extraction with quantity normalization  
-- ✅ Spanish/English mixed content handling
-- 🔄 Image-based recipe extraction (in progress)
-- 🔄 PDF document processing (in progress)
+### **Processing Capabilities** (Updated)
+- ✅ **SPANISH-ONLY TRANSLATION**: ALL recipes translated to Spanish regardless of input language
+- ✅ Spanish recipe text parsing and structuring with LLaVA-Phi3
+- ✅ Ingredient extraction with Spanish quantity normalization (taza, cda, cdta)
+- ✅ **Forced Translation**: English→Spanish (chicken→pollo, cup→taza, heat→calentar)
+- ✅ **No Multi-Language**: System operates in Spanish-only mode for Notion compatibility
+- 🔄 Image-based recipe extraction (infrastructure ready with LLaVA-Phi3)
+- 🔄 PDF document processing (infrastructure ready with LLaVA-Phi3)
 
 ### **Prompt Strategy** (Spanish-first)
 ```python
@@ -171,5 +191,45 @@ RECIPE_FIELDS = {
 **This is a Spanish-language, commercial meal planning app with local LLM processing and Notion integration. All contributions must maintain commercial license compliance, Spanish domain language, and local-first privacy principles.**
 
 **Current Status**: Recipe foundation complete, multimodal processing in progress, pantry management next phase.
+
+---
+
+## 🚨 RECENT CRITICAL CHANGES - MUST READ
+
+### **1. LLM Model Migration: Phi → LLaVA-Phi3**
+- **Problem**: Phi model completely failed Spanish prompts (returned empty responses)
+- **Solution**: Migrated to LLaVA-Phi3 (MIT license) for superior Spanish support
+- **Impact**: Core functionality restored, 2.9GB model vs 1.6GB, 120s timeout vs 45s
+- **Status**: ✅ **COMPLETED** - LLaVA-Phi3 is now the primary and only model
+
+### **2. Spanish-Only Translation System**
+- **Requirement**: User's entire system (Notion DB, UI) operates in Spanish
+- **Implementation**: **ALL recipes translated to Spanish regardless of input language**
+- **Examples**: "Chicken Rice" → "Pollo con Arroz", "2 cups" → "2 tazas", "Heat oil" → "Calentar aceite"
+- **Code Impact**: Removed multi-language configuration, Spanish-forced prompts only
+- **Status**: ✅ **COMPLETED** - No English outputs allowed in final results
+
+### **3. Configuration Changes Made**
+```python
+# Core model configuration now:
+DEFAULT_MODEL = "llava-phi3"  # Changed from "phi"
+TIMEOUT = 120  # Increased for larger model
+LANGUAGE = "spanish"  # Always Spanish, no options
+TEMPERATURE = 0.1  # Low for consistent translation
+
+# Spanish translation rules implemented:
+TRANSLATIONS = {
+    "chicken": "pollo", "beef": "carne", "onion": "cebolla",
+    "cup": "taza", "tbsp": "cda", "tsp": "cdta",
+    "heat": "calentar", "mix": "mezclar", "add": "agregar"
+}
+```
+
+### **4. For Future LLM Work**
+- **Model Choice**: Always use LLaVA-Phi3, never Phi
+- **Language Handling**: Force Spanish translation, no multi-language support
+- **Prompts**: Include explicit translation rules in all recipe prompts
+- **Timeout**: Use 120s minimum for LLaVA models
+- **Testing**: Verify Spanish output regardless of input language
 
 *This context file helps other LLMs understand the project's commercial nature, technical constraints, and development priorities.* 

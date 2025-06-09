@@ -13,7 +13,7 @@ from typing import List, Optional, Dict, Any, Union
 import json
 import re
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 import yaml
 
 class RecipeExtractor:

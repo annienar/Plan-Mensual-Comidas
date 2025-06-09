@@ -35,8 +35,9 @@ cp .env.example .env
 
 2. Update the environment variables in `.env` with your settings:
 ```env
-# OpenAI API
-OPENAI_API_KEY=your_api_key_here
+# LLM Configuration (Local Ollama)
+LLM_MODEL=phi
+LLM_BASE_URL=http://localhost:11434
 
 # Notion API
 NOTION_API_KEY=your_api_key_here

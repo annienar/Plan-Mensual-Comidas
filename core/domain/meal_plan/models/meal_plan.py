@@ -25,7 +25,7 @@ class MealPlan(BaseModel):
 )
     meals: List[Meal] = Field(
         ..., 
-        min_items = 1, 
+        min_length= 1, 
         description="Lista de comidas"
 )
     metadata: MealPlanMetadata = Field(

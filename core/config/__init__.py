@@ -21,7 +21,7 @@ except Exception:
 
     config = Settings(
         llm=LLMSettings(
-            api_key="dummy", model="gpt-4", temperature=0.7, max_tokens=1000, timeout=30
+            model="phi", temperature=0.7, max_tokens=1000, timeout=30, base_url="http://localhost:11434"
         ),
         notion=NotionSettings(api_key="dummy", database_id="dummy", timeout=30),
         debug=False,

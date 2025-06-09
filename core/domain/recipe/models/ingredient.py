@@ -6,7 +6,7 @@ This module contains the ingredient domain model.
 
 from typing import Optional, List
 from fractions import Fraction
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 
 class Ingredient(BaseModel):
     """Ingredient domain model.
@@ -40,7 +40,8 @@ class Ingredient(BaseModel):
         description="Ingredientes alternativos"
 )
 
-    @validator('nombre')
+    @field_validator('nombre')
+    @classmethod
     def validate_nombre(cls, v: str) -> str:
         """Validate name.
 
@@ -59,7 +60,8 @@ class Ingredient(BaseModel):
         # Keep original casing - don't auto-capitalize
         return v
 
-    @validator('unidad')
+    @field_validator('unidad')
+    @classmethod
     def validate_unidad(cls, v: Optional[str]) -> Optional[str]:
         """Validate unit.
 
@@ -103,7 +105,7 @@ class Ingredient(BaseModel):
 
             # Check if it's a proper fraction or mixed number
             if fraction.numerator < fraction.denominator:
-                return str(fraction)
+                return f"{fraction.numerator}/{fraction.denominator}"
             else:
                 # Mixed number
                 whole = fraction.numerator // fraction.denominator
@@ -112,7 +114,7 @@ class Ingredient(BaseModel):
                     return str(whole)
                 else:
                     remainder_fraction = Fraction(remainder, fraction.denominator)
-                    return f"{whole} {remainder_fraction}"
+                    return f"{whole} {remainder_fraction.numerator}/{remainder_fraction.denominator}"
         except (ValueError, ZeroDivisionError):
             # Fallback to decimal if fraction conversion fails
             return str(self.cantidad)
@@ -233,7 +235,7 @@ class Ingredient(BaseModel):
             Ingredient: Created ingredient
         """
         return cls(
-            nombre=data.get('nombre', data.get('name', 'unknown')),
+            nombre=data.get('nombre', data.get('name', 'ingredient')),
             cantidad=data.get('cantidad', data.get('quantity', 0)),
             unidad=data.get('unidad', data.get('unit')),
             notas=data.get('notas', data.get('notes')),

@@ -176,7 +176,7 @@ class RecipeProcessor:
             Ingredient(
                 nombre='Error en extracción de ingredientes',
                 cantidad=1.0,
-                unidad='',
+                unidad='unidad',
                 notas=f'Consultar texto original. Error: {error_reason}'
             )
         ]
@@ -188,6 +188,7 @@ class RecipeProcessor:
         ]
         
         return Recipe(
+            title=title,
             metadata=metadata,
             ingredients=ingredients,
             instructions=instructions

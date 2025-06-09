@@ -7,15 +7,13 @@ from typing import Dict, List, Optional, Any, Union
 
 from dataclasses import dataclass, field
 from enum import Enum
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 
 class LLMModel(str, Enum):
-    """Supported LLM models."""
-    GPT4 = "gpt - 4"
-    GPT35 = "gpt - 3.5 - turbo"
-    CLAUDE = "claude - 3-opus"
-    MISTRAL = "mistral - large"
+    """Supported LLM models (commercial-compliant only)."""
     PHI = "phi"
+    LLAVA_PHI3 = "llava-phi3"
+    MOONDREAM2 = "moondream2"
 
 class LLMResponse(BaseModel):
     """Response from LLM."""
@@ -26,21 +24,24 @@ class LLMResponse(BaseModel):
     processing_time: float = Field(..., description="Time taken to process request in seconds")
     created_at: datetime = Field(default_factory = datetime.now, description="When the response was created")
 
-    @validator('text')
+    @field_validator('text')
+    @classmethod
     def text_must_not_be_empty(cls, v):
         """Validate that text is not empty."""
         if not v.strip():
             raise ValueError('text must not be empty')
         return v
 
-    @validator('processing_time')
+    @field_validator('processing_time')
+    @classmethod
     def processing_time_must_be_positive(cls, v):
         """Validate that processing time is positive."""
         if v <= 0:
             raise ValueError('processing_time must be positive')
         return v
 
-    @validator('usage')
+    @field_validator('usage')
+    @classmethod
     def validate_usage(cls, v):
         """Validate usage statistics."""
         required_fields = {'prompt_tokens', 'completion_tokens', 'total_tokens'}
@@ -64,14 +65,16 @@ class LLMRequest(BaseModel):
     stop: Optional[List[str]] = Field(None, description="Stop sequences")
     stream: bool = Field(False, description="Whether to stream the response")
 
-    @validator('prompt')
+    @field_validator('prompt')
+    @classmethod
     def prompt_must_not_be_empty(cls, v):
         """Validate that prompt is not empty."""
         if not v.strip():
             raise ValueError('prompt must not be empty')
         return v
 
-    @validator('system_prompt')
+    @field_validator('system_prompt')
+    @classmethod
     def system_prompt_must_not_be_empty(cls, v):
         """Validate that system prompt is not empty if provided."""
         if v is not None and not v.strip():
@@ -80,8 +83,7 @@ class LLMRequest(BaseModel):
 
 class LLMConfig(BaseModel):
     """Configuration for LLM client."""
-    api_key: str = Field(..., description="API key for LLM service")
-    model: LLMModel = Field(LLMModel.GPT4, description="Default model to use")
+    model: LLMModel = Field(LLMModel.PHI, description="Default model to use")
     max_tokens: int = Field(2000, gt = 0, description="Default maximum tokens")
     temperature: float = Field(0.7, ge = 0.0, le = 2.0, description="Default temperature")
     cache_ttl: int = Field(3600, gt = 0, description="Cache TTL in seconds")

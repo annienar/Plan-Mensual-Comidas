@@ -1,24 +1,55 @@
 {
   "performance": {
-    "recipe_processing": {
+    "description": "Specific, measurable performance requirements and optimization rules",
+    "version": "2.0.0",
+    "processing_performance": {
       "time_thresholds": {
         "single_recipe_max_seconds": 30,
-        "batch_processing_max_minutes": 10,
+        "batch_processing_max_minutes": 2,
         "llm_response_max_seconds": 15,
-        "file_upload_max_seconds": 5
+        "file_upload_max_seconds": 5,
+        "cache_lookup_max_milliseconds": 100,
+        "intelligent_batch_processing_max_seconds": 120
       },
       "resource_limits": {
         "max_memory_usage_mb": 512,
         "max_cpu_usage_percent": 80,
         "max_disk_usage_gb": 1,
-        "max_concurrent_processes": 3
+        "max_concurrent_processes": 3,
+        "ollama_memory_limit_gb": 6
       },
       "caching": {
         "cache_processed_recipes": true,
         "cache_llm_responses": true,
         "cache_ocr_results": true,
         "cache_location": "var/cache/",
-        "cache_ttl_hours": 24
+        "cache_ttl_hours": 4,
+        "smart_cache_enabled": true,
+        "similarity_threshold": 0.75,
+        "max_cache_size_entries": 5000,
+        "cache_hit_rate_target": 0.75
+      },
+      "specific_optimizations": {
+        "phi_model_settings": {
+          "temperature": 0.05,
+          "max_tokens": 1200,
+          "context_window": 2048,
+          "threading": 4,
+          "timeout_seconds": 30
+        },
+        "batch_processing": {
+          "adaptive_batch_size": true,
+          "complexity_analysis": true,
+          "cpu_based_sizing": "batch_size = min(cpu_count, 3)",
+          "memory_based_sizing": "reduce if memory > 70%",
+          "error_recovery": "fast_failure_enabled"
+        },
+        "connection_optimization": {
+          "http2_enabled": true,
+          "keep_alive": true,
+          "connection_pool_size": 10,
+          "max_concurrent_requests": 3
+        }
       }
     },
     "monitoring": {
@@ -26,36 +57,61 @@
         "collect_processing_times": true,
         "collect_success_rates": true,
         "collect_error_rates": true,
-        "collect_resource_usage": true
+        "collect_resource_usage": true,
+        "collect_cache_efficiency": true,
+        "collect_batch_throughput": true
       },
       "performance_logging": {
         "log_slow_operations": true,
         "log_resource_spikes": true,
         "log_cache_hits_misses": true,
-        "performance_log": "var/logs/performance.log"
+        "performance_log": "var/logs/performance.log",
+        "structured_logging": true,
+        "log_batch_performance": true
       },
       "alerts": {
         "slow_processing_threshold": 45,
         "high_memory_usage": 0.8,
         "high_error_rate": 0.15,
-        "cache_miss_rate": 0.7
+        "cache_miss_rate": 0.4,
+        "batch_processing_slow": 150
+      },
+      "automated_monitoring": {
+        "performance_dashboard": "var/logs/performance_metrics.json",
+        "daily_performance_report": true,
+        "regression_detection": true,
+        "baseline_comparison": true
       }
     },
     "optimization": {
       "automatic_cleanup": {
         "old_logs_days": 7,
-        "old_cache_hours": 48,
-        "old_temp_files_hours": 2
+        "old_cache_hours": 24,
+        "old_temp_files_hours": 1,
+        "memory_cleanup_interval": 300
       },
       "batch_optimization": {
-        "optimal_batch_size": 5,
+        "intelligent_batch_processor": "core.domain.recipe.processors.intelligent_batch",
+        "adaptive_sizing": true,
+        "complexity_based_sorting": true,
         "parallel_processing": false,
-        "queue_management": true
+        "queue_management": true,
+        "error_recovery_strategy": "fast_failure",
+        "performance_tracking": true
       },
-      "database_optimization": {
-        "index_recipe_names": true,
-        "cache_frequent_queries": true,
-        "optimize_search": true
+      "cache_optimization": {
+        "smart_llm_cache": "core.infrastructure.llm.cache.SmartLLMCache",
+        "content_deduplication": true,
+        "similarity_matching": true,
+        "frequency_based_eviction": true,
+        "cache_warming": true
+      },
+      "llm_optimization": {
+        "aggressive_timeouts": true,
+        "minimal_retries": true,
+        "connection_reuse": true,
+        "response_streaming": false,
+        "model_preloading": true
       }
     },
     "testing": {
@@ -63,12 +119,82 @@
         "require_benchmark_tests": true,
         "test_with_large_files": true,
         "test_batch_processing": true,
-        "test_concurrent_usage": true
+        "test_concurrent_usage": true,
+        "test_cache_efficiency": true,
+        "test_intelligent_batch": true
+      },
+      "specific_test_requirements": {
+        "intelligent_batch_complexity": "test complexity analysis accuracy",
+        "adaptive_batch_sizing": "test CPU/memory based sizing",
+        "cache_similarity_matching": "test 75% similarity threshold",
+        "performance_regression": "test against established baselines",
+        "memory_leak_detection": "test long-running processes"
       },
       "load_testing": {
-        "max_concurrent_users": 10,
+        "max_concurrent_users": 5,
         "test_file_upload_limits": true,
-        "test_processing_queue": true
+        "test_processing_queue": true,
+        "sustained_load_duration_minutes": 10,
+        "peak_load_burst_testing": true
+      },
+      "automated_performance_validation": {
+        "pre_commit_performance_tests": "pytest tests/performance/test_performance.py -v",
+        "benchmark_comparison": "pytest tests/performance/ --benchmark-json=var/test-results/performance.json",
+        "memory_profiling": "pytest tests/performance/ --profile-svg",
+        "cache_hit_validation": "validate cache hit rate > 75%"
+      }
+    },
+    "enforcement": {
+      "quality_gates": {
+        "block_merge_if_slow": true,
+        "require_performance_tests": "for processing changes",
+        "validate_cache_efficiency": true,
+        "check_memory_usage": true
+      },
+      "automated_checks": {
+        "single_recipe_performance": "time python scripts/test_single_recipe.py < 30s",
+        "batch_processing_performance": "time python scripts/test_batch_processing.py < 120s",
+        "cache_hit_rate_check": "python scripts/check_cache_efficiency.py",
+        "memory_usage_check": "python scripts/check_memory_usage.py"
+      },
+      "regression_prevention": {
+        "baseline_comparison": true,
+        "performance_degradation_threshold": 0.2,
+        "alert_on_regression": true,
+        "block_deployment_on_major_regression": true
+      }
+    },
+    "optimization_targets": {
+      "current_baselines": {
+        "traditional_batch_processing": "75 seconds average",
+        "cache_miss_processing": "30 seconds per recipe",
+        "memory_usage_peak": "3-6GB for complex operations"
+      },
+      "improvement_targets": {
+        "intelligent_batch_processing": "22-37 seconds average (50-70% improvement)",
+        "cache_hit_processing": "0.1 seconds per recipe (99.9% improvement)",
+        "memory_optimization": "< 512MB sustained usage",
+        "throughput_target": "120-160 recipes/hour"
+      },
+      "success_metrics": {
+        "performance_improvement": "50-85% overall speedup",
+        "cache_efficiency": "> 75% hit rate",
+        "resource_optimization": "< 80% CPU, < 70% memory",
+        "error_rate": "< 5% for normal operations"
+      }
+    },
+    "implementation_validation": {
+      "required_components": {
+        "smart_cache": "core.infrastructure.llm.cache.SmartLLMCache",
+        "intelligent_batch": "core.domain.recipe.processors.intelligent_batch.IntelligentBatchProcessor",
+        "performance_tests": "tests.performance.test_performance.TestPerformance",
+        "monitoring": "var/logs/performance.log"
+      },
+      "validation_commands": {
+        "test_smart_cache": "python -c \"from core.infrastructure.llm.cache import SmartLLMCache; print('Cache OK')\"",
+        "test_intelligent_batch": "python -c \"from core.domain.recipe.processors.intelligent_batch import IntelligentBatchProcessor; print('Batch OK')\"",
+        "run_performance_tests": "pytest tests/performance/test_performance.py::TestPerformance::test_intelligent_batch_complexity_analysis -v",
+        "validate_implementations": "python scripts/validate_performance_implementations.py"
       }
     }
   }

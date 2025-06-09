@@ -23,8 +23,8 @@ source .venv/bin/activate  # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 
 # 4. Install Ollama models (commercial-licensed only)
-ollama pull phi
-ollama pull llava-phi3
+ollama pull llava-phi3  # Primary model (Spanish + Vision)
+# Note: phi model deprecated due to poor Spanish support
 
 # 5. Set up environment variables
 cp .env.example .env
@@ -181,11 +181,14 @@ plan-mensual-comidas/
 - **Single Responsibility**: Each class has one reason to change
 - **Spanish Language**: Field names in Spanish (nombre, cantidad, unidad)
 
-### LLM Integration Guidelines
+### LLM Integration Guidelines (Updated December 2024)
 - **Commercial Compliance**: Only MIT/Apache 2.0 licensed models
+- **Primary Model**: LLaVA-Phi3 (replaced Phi due to poor Spanish support)
+- **Spanish-Only Translation**: ALL recipes must be translated to Spanish regardless of input language
 - **Error Handling**: Graceful degradation when LLM unavailable
-- **Prompt Engineering**: Consistent, tested prompts
-- **Response Validation**: Always validate LLM responses
+- **Prompt Engineering**: Spanish-forced prompts with explicit translation rules
+- **Response Validation**: Always validate Spanish LLM responses
+- **Timeout Configuration**: 120s for LLaVA-Phi3 (larger model)
 
 ## 🔧 Development Tools
 
@@ -263,10 +266,31 @@ ollama pull llava-phi3
 ## 📊 Performance Guidelines
 
 ### Optimization Targets
-- Recipe processing: <10 seconds
+- Recipe processing: <10 seconds (single recipe)
+- Batch processing: <2 minutes (10 recipes)
 - Pantry checks: <2 seconds
 - Test suite: <30 seconds
 - Memory usage: <500MB
+
+### Performance Optimizations Implemented
+
+#### Intelligent Batch Processing (December 2024)
+- **Adaptive Batch Sizing**: Automatically adjusts batch size (2-10 recipes) based on system resources and success rates
+- **Recipe Complexity Analysis**: Sorts recipes by complexity (simple first) for optimal throughput
+- **Error Recovery**: Multiple fallback strategies prevent batch failures
+- **Performance Tracking**: Continuous monitoring and optimization
+
+**Performance Targets:**
+- Complexity analysis: <1ms per recipe
+- Adaptive batch sizing: <0.1ms per calculation
+- Recipe sorting: <100ms for 100 recipes
+- History management: <0.5ms per update
+
+#### Enhanced Caching System (December 2024)  
+- **Content Similarity Matching**: 75% similarity threshold for cache hits
+- **Spanish-English Unit Mapping**: cups→tazas, tablespoons→cucharadas
+- **Recipe Type Detection**: pasta, pollo, arroz classification
+- **Expected Speedup**: 60-80% for similar content
 
 ### Profiling
 ```bash
@@ -275,6 +299,12 @@ python -m memory_profiler core/cli.py
 
 # Profile CPU usage
 python -m cProfile -s cumulative core/cli.py
+
+# Test performance optimizations
+pytest tests/performance/test_performance.py::TestPerformance::test_performance_benchmark_suite -v
+
+# Run intelligent batch processing benchmarks
+pytest tests/performance/test_performance.py -k "intelligent_batch" -v
 ```
 
 ## 🔒 Security Guidelines

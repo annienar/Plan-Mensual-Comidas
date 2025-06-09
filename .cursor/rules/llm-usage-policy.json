@@ -1,0 +1,278 @@
+{
+  "llm_usage_policy": {
+    "description": "Comprehensive LLM usage rules for commercial compliance, model selection, and technical integration",
+    "version": "2.0.0",
+    "commercial_compliance": {
+      "critical_requirement": "All LLM models MUST comply with commercial licensing",
+      "approved_licenses": ["MIT", "Apache-2.0"],
+      "forbidden_licenses": [
+        "custom_with_restrictions",
+        "proprietary", 
+        "GPL",
+        "LGPL",
+        "AGPL"
+      ],
+      "requirements": {
+        "commercial_distribution_allowed": true,
+        "no_royalties_required": true,
+        "no_usage_fees": true,
+        "modification_allowed": true,
+        "redistribution_allowed": true
+      },
+      "validation": {
+        "check_license_before_model_selection": true,
+        "reject_non_compliant_models": true,
+        "document_license_compliance": true,
+        "require_legal_review_for_new_models": true
+      }
+    },
+    "model_preference_hierarchy": {
+      "rule": "ALWAYS prefer LLaVA-Phi3 as primary model (Phi deprecated due to poor Spanish support)",
+      "hierarchy": [
+        {
+          "rank": 1,
+          "model_family": "llava-phi",
+          "specific_models": ["llava-phi3"],
+          "license": "MIT",
+          "use_cases": ["text_processing", "recipe_parsing", "spanish_translation", "vision_ready"],
+          "justification": "PRIMARY: Superior Spanish support, MIT licensed, vision ready for future",
+          "deployment": "ollama_local",
+          "timeout": 120,
+          "status": "ACTIVE"
+        },
+        {
+          "rank": 2,
+          "model_family": "moondream",
+          "specific_models": ["moondream2"],
+          "license": "Apache-2.0", 
+          "use_cases": ["vision_backup", "image_processing", "fallback_multimodal"],
+          "justification": "Vision backup only - Apache 2.0, fast processing",
+          "deployment": "ollama_local",
+          "status": "BACKUP"
+        },
+        {
+          "rank": 3,
+          "model_family": "phi",
+          "specific_models": ["phi", "phi-2", "phi-3"],
+          "license": "MIT",
+          "use_cases": [],
+          "justification": "DEPRECATED: Failed Spanish language prompts, replaced by LLaVA-Phi3",
+          "deployment": "ollama_local",
+          "status": "DEPRECATED"
+        }
+      ]
+    },
+    "forbidden_models": {
+      "strict_enforcement": true,
+      "never_use": {
+        "llama_family": {
+          "models": ["llama", "llama2", "code-llama", "llama-cpp"],
+          "reason": "Custom license with commercial restrictions",
+          "alternative": "llava-phi3",
+          "enforcement": "block_at_code_level"
+        },
+        "openai_models": {
+          "models": ["gpt-3.5", "gpt-4", "davinci", "ada", "babbage"],
+          "reason": "Proprietary, API costs, data privacy concerns",
+          "alternative": "llava-phi3",
+          "enforcement": "block_at_code_level"
+        },
+        "anthropic_models": {
+          "models": ["claude", "claude-2", "claude-instant"],
+          "reason": "Proprietary, API costs, data privacy concerns", 
+          "alternative": "llava-phi3",
+          "enforcement": "block_at_code_level"
+        },
+        "google_models": {
+          "models": ["gemini", "palm", "bard"],
+          "reason": "Proprietary, API costs, data privacy concerns",
+          "alternative": "llava-phi3", 
+          "enforcement": "block_at_code_level"
+        }
+      }
+    },
+    "deployment_requirements": {
+      "mandatory_local_deployment": {
+        "ollama_required": true,
+        "local_processing_only": true,
+        "no_external_api_calls": true,
+        "self_contained_deployment": true,
+        "offline_capable": true
+      },
+      "prohibited_deployments": {
+        "cloud_apis": ["openai_api", "anthropic_api", "google_api"],
+        "third_party_services": true,
+        "data_sharing_services": true,
+        "telemetry_services": true
+      },
+      "privacy_requirements": {
+        "user_data_stays_local": true,
+        "no_telemetry": true,
+        "no_usage_tracking": true,
+        "no_model_training_on_user_data": true
+      }
+    },
+    "technical_integration": {
+      "context_management": {
+        "max_context_tokens": 4000,
+        "context_compression": true,
+        "preserve_spanish_context": true,
+        "required_context_fields": [
+          "recipe_type",
+          "language",
+          "processing_stage"
+        ]
+      },
+      "prompt_engineering": {
+        "template_location": "core/llm/prompts/",
+        "versioning": true,
+        "testing_required": true,
+        "spanish_prompts": {
+          "use_formal_spanish": true,
+          "include_cultural_context": true,
+          "measurement_units": "metric"
+        }
+      },
+      "response_validation": {
+        "required_fields": [
+          "nombre",
+          "ingredientes", 
+          "preparacion"
+        ],
+        "spanish_field_validation": true,
+        "ingredient_format": "- cantidad unidad ingrediente",
+        "max_retries": 3,
+        "fallback_strategy": "rule_based_extraction"
+      },
+      "performance_requirements": {
+        "timeout_seconds": 30,
+        "cache_responses": true,
+        "cache_location": "var/cache/llm/",
+        "log_performance": "var/logs/llm_performance.log"
+      },
+      "error_handling": {
+        "log_all_errors": true,
+        "preserve_failed_requests": true,
+        "failed_requests_location": "var/logs/llm_failures/",
+        "retry_logic": {
+          "max_attempts": 3,
+          "backoff_strategy": "exponential",
+          "retry_on": ["timeout", "rate_limit", "server_error"]
+        }
+      },
+      "cost_management": {
+        "track_token_usage": true,
+        "monthly_budget_tokens": 1000000,
+        "alert_at_percentage": 80,
+        "log_usage": "var/logs/llm_usage.log"
+      }
+    },
+    "code_enforcement": {
+      "import_restrictions": {
+        "forbidden_imports": [
+          "openai",
+          "anthropic", 
+          "google.cloud.ai",
+          "cohere",
+          "huggingface_hub.hf_api"
+        ],
+        "allowed_imports": [
+          "ollama",
+          "transformers.local",
+          "torch",
+          "numpy"
+        ]
+      },
+      "configuration_validation": {
+        "check_model_names": true,
+        "validate_ollama_endpoint": true,
+        "ensure_local_deployment": true,
+        "block_api_key_usage": true
+      },
+      "runtime_validation": {
+        "verify_model_license_at_startup": true,
+        "log_model_usage": true,
+        "alert_on_forbidden_model_attempt": true,
+        "graceful_fallback_to_approved_models": true
+      }
+    },
+    "exception_handling": {
+      "when_primary_model_unavailable": {
+        "fallback_order": ["llava-phi3", "moondream2", "fail_gracefully"],
+        "never_fallback_to_forbidden": true,
+        "log_fallback_reason": true,
+        "alert_user": true
+      },
+      "license_validation_failure": {
+        "action": "block_model_usage",
+        "log_violation": true,
+        "suggest_alternative": "llava-phi3",
+        "require_manual_approval": true
+      }
+    },
+    "monitoring_and_compliance": {
+      "audit_trail": {
+        "log_all_model_usage": true,
+        "track_license_compliance": true,
+        "monitor_api_call_attempts": true,
+        "record_policy_violations": true
+      },
+      "reporting": {
+        "monthly_compliance_report": true,
+        "model_usage_statistics": true,
+        "license_compliance_status": true,
+        "cost_savings_from_local_deployment": true
+      }
+    },
+    "development_guidelines": {
+      "code_review_requirements": {
+        "check_model_selection_justification": true,
+        "verify_license_compliance": true,
+        "validate_local_deployment": true,
+        "ensure_approved_model_preference": true
+      },
+      "testing_requirements": {
+        "test_with_approved_models_only": true,
+        "validate_fallback_mechanisms": true,
+        "test_license_compliance_checks": true,
+        "verify_local_deployment_works": true,
+        "test_spanish_context_preservation": true,
+        "validate_response_format": true
+      }
+    },
+    "llm_context_documentation": {
+      "mandatory_updates": {
+        "description": "Always update docs/llm/context.md when making significant system changes",
+        "triggers": [
+          "LLM model changes (switching models, deprecating models)",
+          "Language processing changes (Spanish-only, translation rules)",
+          "Configuration updates (timeouts, prompts, parameters)",
+          "Architecture changes affecting LLM integration",
+          "Commercial licensing changes for models",
+          "Performance requirement changes",
+          "New LLM capabilities added or removed"
+        ],
+        "requirements": [
+          "Update docs/llm/context.md whenever model configurations change",
+          "Document language handling changes in LLM context file",
+          "Add new model migrations and deprecations to context",
+          "Include configuration changes that affect future LLM usage",
+          "Update processing capabilities and requirements in context",
+          "Ensure future LLMs understand critical system constraints and decisions",
+          "Add new commercial licensing requirements for models",
+          "Document prompt strategy changes and translation rules"
+        ]
+      },
+      "context_file_priority": {
+        "description": "LLM context file is critical infrastructure - treat with high priority",
+        "requirements": [
+          "docs/llm/context.md is as important as core code documentation",
+          "Update context file in same commit as related changes",
+          "Review context file for accuracy after major changes",
+          "Include context updates in documentation automation rules",
+          "Ensure context file remains the single source of truth for LLM usage"
+        ]
+      }
+    }
+  }
+}

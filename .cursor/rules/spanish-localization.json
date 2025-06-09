@@ -1,10 +1,17 @@
 {
   "spanish_localization": {
+    "description": "Comprehensive Spanish localization requirements with validation and enforcement",
+    "version": "2.0.0",
     "language_standards": {
       "primary_language": "es-ES",
       "fallback_language": "en-US",
       "character_encoding": "utf-8",
-      "locale_settings": "es_ES.UTF-8"
+      "locale_settings": "es_ES.UTF-8",
+      "enforcement": {
+        "validate_utf8_encoding": true,
+        "preserve_spanish_characters": true,
+        "block_ascii_only_content": "for Spanish text fields"
+      }
     },
     "recipe_terminology": {
       "required_spanish_fields": [
@@ -13,7 +20,11 @@
         "preparacion", 
         "porciones",
         "tiempo_preparacion",
-        "dificultad"
+        "tiempo_coccion",
+        "tiempo_total",
+        "dificultad",
+        "calorias",
+        "tags"
       ],
       "measurement_units": {
         "volume": ["ml", "l", "taza", "cucharada", "cucharadita"],
@@ -25,25 +36,59 @@
         "validate_spanish_verbs": true,
         "common_techniques": [
           "freír", "hornear", "hervir", "saltear", "asar",
-          "mezclar", "batir", "picar", "cortar", "rehogar"
-        ]
+          "mezclar", "batir", "picar", "cortar", "rehogar",
+          "sofreír", "cocer", "dorar", "glasear", "marinar"
+        ],
+        "enforcement": {
+          "validate_cooking_verbs": "require Spanish cooking verbs in preparation steps",
+          "suggest_corrections": "for English cooking terms",
+          "maintain_terminology_consistency": true
+        }
+      },
+      "ingredient_validation": {
+        "spanish_ingredient_names": true,
+        "regional_variations": {
+          "allow_mexican_terms": true,
+          "allow_argentinian_terms": true,
+          "allow_spanish_peninsular": true
+        },
+        "common_ingredients": {
+          "proteins": ["pollo", "carne", "pescado", "huevos", "tofu"],
+          "vegetables": ["cebolla", "ajo", "tomate", "pimiento", "zanahoria"],
+          "seasonings": ["sal", "pimienta", "orégano", "comino", "pimentón"]
+        }
       }
     },
     "text_processing": {
       "accent_handling": {
         "preserve_accents": true,
         "normalize_unicode": true,
-        "handle_missing_accents": true
+        "handle_missing_accents": true,
+        "validation": {
+          "check_accent_consistency": true,
+          "auto_correct_accents": "for common words",
+          "alert_missing_accents": true
+        }
       },
       "spanish_nlp": {
         "stemming": "spanish",
         "stopwords": "spanish",
-        "tokenization": "spanish_aware"
+        "tokenization": "spanish_aware",
+        "enforcement": {
+          "use_spanish_nlp_models": true,
+          "validate_spanish_text_processing": true,
+          "test_accent_preservation": true
+        }
       },
       "ingredient_parsing": {
         "spanish_quantity_patterns": true,
         "unit_conversion": "metric",
-        "ingredient_recognition": "spanish_food_database"
+        "ingredient_recognition": "spanish_food_database",
+        "parsing_rules": {
+          "quantity_pattern": "\\d+\\s+(taza|cucharada|cucharadita|kg|g|ml|l)",
+          "ingredient_extraction": "extract Spanish ingredient names",
+          "measurement_validation": "validate Spanish units"
+        }
       }
     },
     "content_validation": {
@@ -53,13 +98,109 @@
         "allow_mexican_terms": true,
         "allow_argentinian_terms": true,
         "allow_spanish_peninsular": true
+      },
+      "validation_rules": {
+        "field_name_validation": {
+          "enforce_spanish_field_names": true,
+          "validation_command": "python scripts/validate_spanish_fields.py",
+          "required_fields": ["nombre", "ingredientes", "preparacion"],
+          "block_english_field_names": true
+        },
+        "content_quality": {
+          "validate_spanish_content": true,
+          "check_cooking_terminology": true,
+          "verify_ingredient_authenticity": true,
+          "validate_measurement_units": true
+        },
+        "consistency_checks": {
+          "terminology_consistency": "across all recipes",
+          "unit_consistency": "prefer metric system",
+          "accent_consistency": "maintain proper Spanish accents"
+        }
       }
     },
     "output_formatting": {
       "date_format": "dd/mm/yyyy",
       "number_format": "1.234,56",
       "list_separators": "spanish",
-      "quotation_marks": "spanish_style"
+      "quotation_marks": "spanish_style",
+      "formatting_enforcement": {
+        "validate_date_format": true,
+        "enforce_spanish_number_format": true,
+        "check_punctuation_style": true,
+        "validate_list_formatting": true
+      }
+    },
+    "localization_testing": {
+      "spanish_test_data": {
+        "use_authentic_recipes": true,
+        "test_accent_handling": true,
+        "test_cooking_terminology": true,
+        "test_regional_variations": true
+      },
+      "validation_tests": {
+        "field_name_spanish_validation": "test all model fields use Spanish names",
+        "content_language_detection": "verify Spanish content processing",
+        "accent_preservation": "test special character handling",
+        "cooking_term_recognition": "validate Spanish culinary vocabulary"
+      },
+      "automated_testing": {
+        "run_spanish_validation": "pytest tests/ -k spanish",
+        "test_field_names": "python scripts/test_spanish_field_names.py",
+        "validate_content": "python scripts/validate_spanish_content.py"
+      }
+    },
+    "translation_requirements": {
+      "english_to_spanish": {
+        "automatic_translation": "for English input recipes",
+        "preserve_culinary_context": true,
+        "validate_translations": true,
+        "maintain_authenticity": "prefer traditional Spanish terms"
+      },
+      "translation_validation": {
+        "culinary_term_accuracy": true,
+        "measurement_unit_conversion": true,
+        "cultural_appropriateness": true,
+        "regional_dialect_consideration": true
+      }
+    },
+    "enforcement_mechanisms": {
+      "pre_commit_validation": {
+        "validate_spanish_fields": "python scripts/validate_spanish_fields.py",
+        "check_content_language": "python scripts/check_spanish_content.py",
+        "verify_accent_preservation": "python scripts/test_accent_handling.py"
+      },
+      "model_validation": {
+        "pydantic_field_validation": "all recipe model fields must use Spanish names",
+        "content_validation": "recipe content must be primarily in Spanish",
+        "terminology_validation": "cooking terms must use Spanish vocabulary"
+      },
+      "automated_quality_gates": {
+        "block_english_field_names": true,
+        "require_spanish_cooking_terms": true,
+        "validate_accent_preservation": true,
+        "enforce_metric_units": true
+      },
+      "validation_commands": {
+        "test_model_fields": "python -c \"from core.domain.recipe.models.recipe import Recipe; assert hasattr(Recipe, 'nombre')\"",
+        "validate_spanish_content": "python scripts/validate_all_spanish.py",
+        "check_cooking_terms": "python scripts/validate_cooking_terminology.py",
+        "test_accent_handling": "python scripts/test_unicode_handling.py"
+      }
+    },
+    "quality_metrics": {
+      "success_criteria": {
+        "spanish_field_coverage": "100% of recipe fields use Spanish names",
+        "content_language_accuracy": "> 95% Spanish content",
+        "cooking_term_authenticity": "> 90% authentic Spanish culinary terms",
+        "accent_preservation": "100% accent preservation in processing"
+      },
+      "monitoring": {
+        "track_language_compliance": true,
+        "monitor_translation_quality": true,
+        "validate_terminology_consistency": true,
+        "alert_on_compliance_violations": true
+      }
     }
   }
 } 

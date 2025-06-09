@@ -16,6 +16,7 @@ class PromptTask(Enum):
     RECIPE_PARSER = "recipe_parser"
     INGREDIENT_NORMALIZER = "ingredient_normalizer"
     RECIPE_EXTRACTION = "recipe_extraction"
+    RECIPE_VISION = "recipe_vision"  # New: For image-based recipe extraction
     MEAL_PLAN_GENERATION = "meal_plan_generation"
     MEAL_PLAN_METADATA_EXTRACTION = "meal_plan_metadata_extraction"
     MEAL_PLAN_MEALS_EXTRACTION = "meal_plan_meals_extraction"
@@ -90,64 +91,76 @@ class PromptManager:
 ), 
             PromptTask.RECIPE_EXTRACTION: Prompt(
                 current_version = PromptVersion(
-                    version="1.0.0", 
+                    version="2.0.0", 
                     created_at = datetime.now(), 
-                    template="""Extrae la información de la receta del siguiente texto. Asegúrate de:
-1. Extraer TODOS los ingredientes mencionados, incluyendo los que aparecen en las instrucciones, combinados con otros, opcionales o en cualquier formato.
-2. Para cada ingrediente, proporciona:
-- nombre: nombre del ingrediente
-- cantidad: cantidad numérica (0.0 si no se especifica)
-- unidad: unidad de medida (vacío si no se especifica)
-- categoria: categoría del ingrediente (proteínas, vegetales, lácteos, granos, especias, líquidos, otros)
-- notas: notas adicionales o especificaciones
-- alternativas: ingredientes alternativos si se mencionan
-3. El título debe ser conciso, amigable para SEO y en español, sin ningún prefijo.
-4. Las instrucciones deben ser claras y numeradas.
+                    template="""Extrae información de esta receta en español y devuelve JSON:
 
-Ejemplo de formato esperado:
-{
-    "metadata": {
-        "title": "Pollo al Curry", 
+{{
+    "metadata": {{
+        "title": "Título Atractivo de la Receta", 
         "servings": 4, 
         "prep_time": 15, 
         "cook_time": 30, 
         "difficulty": "fácil"
-    }, 
+    }}, 
     "ingredients": [
-        {
-            "nombre": "pollo", 
+        {{
+            "nombre": "ingrediente", 
             "cantidad": 500, 
             "unidad": "g", 
-            "categoria": "proteínas", 
+            "categoria": "proteína", 
             "notas": "en cubos", 
             "alternativas": []
-        }, 
-        {
-            "nombre": "cebolla", 
-            "cantidad": 1, 
-            "unidad": "", 
-            "categoria": "vegetales", 
-            "notas": "picada", 
-            "alternativas": []
-        }
+        }}
     ], 
     "instructions": [
-        "Cortar el pollo en cubos", 
-        "Picar la cebolla finamente"
+        "Paso 1: Preparar ingredientes",
+        "Paso 2: Cocinar según indicaciones"
     ]
-}
+}}
 
-IMPORTANTE:
-- NO omitas ningún ingrediente mencionado
-- NO combines ingredientes diferentes
-- Asegúrate de asignar una categoría a cada ingrediente
-- Si un ingrediente no tiene cantidad o unidad, usa valores vacíos o 0.0
-- Si hay ingredientes opcionales, inclúyelos con una nota indicándolo
-- Si hay alternativas, inclúyelas en el campo alternativas
+Texto de receta:
+{text}
 
-Texto de la receta:
-{text}""", 
-                    description="Spanish recipe extraction prompt", 
+Reglas de llava-phi3:
+- Traduce todo al español automáticamente
+- Extrae TODOS los ingredientes mencionados
+- Convierte fracciones a decimales (1/2 = 0.5)
+- Categorías: proteína, vegetal, lácteo, grano, especia, líquido, otro
+- Instrucciones numeradas y separadas
+- Títulos descriptivos y atractivos
+- Usa terminología culinaria española""", 
+                    description="llava-phi3 optimized Spanish recipe extraction", 
+                    author="System v2.0"
+)
+), 
+            PromptTask.RECIPE_VISION: Prompt(
+                current_version = PromptVersion(
+                    version="1.0.0", 
+                    created_at = datetime.now(), 
+                    template="""
+                    Extract recipe information from the following image. The information should include:
+                    - Title
+                    - Ingredients
+                    - Steps
+                    - Portions
+                    - Calories
+
+                    Return the information in a JSON format with the following structure:
+                    {{
+                        "title": "string", 
+                        "ingredients": [
+                            {{"name": "string", "quantity": "string", "unit": "string"}}
+                        ], 
+                        "steps": ["string"], 
+                        "portions": "string", 
+                        "calories": "string"
+                    }}
+
+                    Image:
+                    {image_path}
+                    """, 
+                    description="Recipe vision extraction prompt", 
                     author="System"
 )
 ), 

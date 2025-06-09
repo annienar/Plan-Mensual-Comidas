@@ -1,0 +1,98 @@
+{
+  "name": "Configuration Management Standards",
+  "description": "Rules for consistent configuration handling, validation, and environment management",
+  "rules": [
+    {
+      "rule": "CONFIGURATION_VALIDATION_REQUIREMENTS",
+      "description": "All configuration must be validated before use",
+      "requirements": [
+        "Validate model names against approved list (llava-phi3, moondream2)",
+        "Check timeout values are reasonable (30s-300s range)",
+        "Validate language settings (only 'spanish' allowed)",
+        "Verify API keys are present for external services (Notion)",
+        "Check file paths exist and are accessible",
+        "Validate temperature values (0.0-1.0 range for LLM)",
+        "Ensure required directories exist (var/logs/, tests/temp/)"
+      ],
+      "validation_patterns": {
+        "model_validation": "Must be in ['llava-phi3', 'moondream2', 'phi'] (phi deprecated)",
+        "timeout_validation": "Must be integer between 30-300 seconds",
+        "language_validation": "Must be exactly 'spanish' (no other values allowed)",
+        "temperature_validation": "Must be float between 0.0-1.0",
+        "path_validation": "Must exist and be readable/writable as appropriate"
+      }
+    },
+    {
+      "rule": "ENVIRONMENT_SPECIFIC_CONFIGURATION",
+      "description": "Handle different environment configurations consistently",
+      "environments": {
+        "development": {
+          "model_timeout": "60 seconds (shorter for faster iteration)",
+          "log_level": "DEBUG",
+          "notion_sync": "optional (can use local files)",
+          "performance_monitoring": "enabled"
+        },
+        "production": {
+          "model_timeout": "120 seconds (full timeout for reliability)",
+          "log_level": "INFO", 
+          "notion_sync": "required",
+          "performance_monitoring": "enabled"
+        },
+        "testing": {
+          "model_timeout": "30 seconds (fast feedback)",
+          "log_level": "WARNING",
+          "notion_sync": "disabled (use test doubles)",
+          "performance_monitoring": "disabled"
+        }
+      },
+      "requirements": [
+        "Use environment-specific configuration files in config/ directory",
+        "Never hardcode environment-specific values in core code", 
+        "Provide sensible defaults for all optional configuration",
+        "Document all configuration options and their purposes",
+        "Use type hints for all configuration classes"
+      ]
+    },
+    {
+      "rule": "CONFIGURATION_SECURITY_STANDARDS",
+      "description": "Secure handling of sensitive configuration data",
+      "requirements": [
+        "Never commit API keys or secrets to version control",
+        "Use environment variables for sensitive data",
+        "Validate API key format before use",
+        "Log configuration loading (but never log sensitive values)",
+        "Fail gracefully when required configuration is missing",
+        "Use .env files for local development secrets"
+      ],
+      "security_patterns": {
+        "api_key_handling": "Load from environment, validate format, never log",
+        "database_urls": "Use environment variables, validate connectivity",
+        "file_paths": "Validate paths are within allowed directories",
+        "model_endpoints": "Validate URLs are localhost or approved domains"
+      }
+    },
+    {
+      "rule": "DEFAULT_CONFIGURATION_STANDARDS",
+      "description": "Provide sensible defaults for all configuration options",
+      "required_defaults": {
+        "llm_model": "llava-phi3",
+        "llm_timeout": "120",
+        "llm_temperature": "0.1",
+        "language": "spanish",
+        "log_level": "INFO",
+        "max_retries": "3",
+        "chunk_size": "1024",
+        "output_format": "json"
+      },
+      "default_patterns": {
+        "model_configuration": "Always default to llava-phi3 with Spanish-optimized settings",
+        "timeout_configuration": "Use model-appropriate timeouts (120s for llava, 45s for others)",
+        "language_configuration": "Always default to Spanish (no multi-language options)",
+        "logging_configuration": "Default to INFO level with Spanish message templates"
+      }
+    }
+  ],
+  "enforcement": "MANDATORY",
+  "created": "2024-current", 
+  "rationale": "Consistent configuration management prevents errors, improves security, and ensures reliable system behavior across environments."
+} 

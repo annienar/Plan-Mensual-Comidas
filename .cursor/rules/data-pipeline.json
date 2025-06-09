@@ -1,35 +1,101 @@
 {
   "data_pipeline": {
+    "description": "Comprehensive data pipeline rules with specific validation and enforcement",
+    "version": "2.0.0",
     "recipe_processing": {
       "input_validation": {
         "supported_formats": [".txt", ".pdf", ".jpg", ".jpeg", ".png"],
         "max_file_size_mb": 10,
         "encoding": "utf-8",
-        "require_spanish_content": true
+        "require_spanish_content": true,
+        "validation_rules": {
+          "file_format_validation": {
+            "check_file_extension": true,
+            "validate_file_content": true,
+            "reject_unsupported_formats": true
+          },
+          "content_validation": {
+            "detect_language": "prioritize Spanish content",
+            "validate_recipe_structure": "check for ingredients and steps",
+            "minimum_content_length": "50 characters"
+          },
+          "encoding_validation": {
+            "force_utf8": true,
+            "preserve_spanish_accents": true,
+            "handle_encoding_errors": "gracefully convert"
+          }
+        }
       },
       "processing_stages": {
         "extraction": {
           "methods": ["llm", "ocr", "text_parsing"],
           "fallback_chain": ["llm", "rule_based"],
-          "output_format": "json"
+          "output_format": "json",
+          "stage_validation": {
+            "llm_extraction": {
+              "timeout_seconds": 30,
+              "retry_attempts": 1,
+              "validate_spanish_output": true,
+              "required_fields": ["nombre", "ingredientes", "preparacion"]
+            },
+            "ocr_extraction": {
+              "image_preprocessing": true,
+              "spanish_language_model": true,
+              "confidence_threshold": 0.8
+            },
+            "fallback_validation": {
+              "rule_based_patterns": "Spanish recipe patterns",
+              "minimum_quality_threshold": "basic recipe structure",
+              "error_handling": "log failure reasons"
+            }
+          }
         },
         "validation": {
           "required_fields": ["nombre", "ingredientes", "preparacion"],
           "spanish_validation": true,
           "ingredient_parsing": true,
-          "portion_validation": true
+          "portion_validation": true,
+          "validation_enforcement": {
+            "field_presence_check": "block processing if missing required fields",
+            "spanish_content_check": "validate primary language is Spanish",
+            "ingredient_format_check": "validate ingredient list format",
+            "preparation_steps_check": "validate numbered preparation steps"
+          }
         },
         "normalization": {
           "standardize_measurements": true,
           "clean_ingredient_names": true,
-          "format_instructions": true
+          "format_instructions": true,
+          "normalization_rules": {
+            "measurement_standardization": {
+              "convert_to_metric": true,
+              "standardize_unit_names": "taza, cucharada, kg, g, ml, l",
+              "validate_quantity_format": "number + unit + ingredient"
+            },
+            "ingredient_cleaning": {
+              "remove_extra_spaces": true,
+              "standardize_ingredient_names": true,
+              "validate_spanish_names": true
+            },
+            "instruction_formatting": {
+              "number_steps": true,
+              "validate_spanish_verbs": true,
+              "ensure_clear_instructions": true
+            }
+          }
         }
       },
       "quality_assurance": {
         "confidence_threshold": 0.8,
         "manual_review_required": false,
         "automatic_correction": true,
-        "human_feedback_integration": true
+        "human_feedback_integration": true,
+        "qa_enforcement": {
+          "confidence_validation": "reject recipes below threshold",
+          "automatic_enhancement": "improve low-confidence extractions",
+          "feedback_loop": "learn from corrections",
+          "quality_metrics": "track extraction success rates"
+        }
       }
     },
     "data_flow": {
@@ -44,32 +110,143 @@
         "log_all_operations": true,
         "track_processing_time": true,
         "record_success_rate": true,
-        "maintain_audit_trail": true
+        "maintain_audit_trail": true,
+        "tracking_enforcement": {
+          "structured_logging": "JSON format for all operations",
+          "performance_metrics": "log processing time per recipe",
+          "error_categorization": "classify and track error types",
+          "audit_trail_retention": "maintain 90 days of operation logs"
+        }
+      },
+      "file_management": {
+        "input_file_handling": {
+          "auto_detect_encoding": true,
+          "preserve_original_files": true,
+          "create_processing_timestamps": true
+        },
+        "output_file_organization": {
+          "json_naming_convention": "recipe_name_timestamp.json",
+          "markdown_export": "optional formatted output",
+          "backup_strategy": "automatic archiving"
+        },
+        "error_handling": {
+          "quarantine_failed_files": true,
+          "log_detailed_error_info": true,
+          "retry_mechanism": "intelligent retry for transient failures"
+        }
       }
     },
     "batch_processing": {
-      "batch_size": 5,
+      "batch_size": 3,
       "parallel_processing": false,
       "retry_failed": true,
       "progress_reporting": true,
-      "checkpoint_frequency": 10
+      "checkpoint_frequency": 5,
+      "intelligent_batch_processing": {
+        "adaptive_batch_sizing": {
+          "cpu_based_sizing": "batch_size = min(cpu_count, 3)",
+          "memory_based_sizing": "reduce batch size if memory > 70%",
+          "complexity_analysis": true
+        },
+        "smart_scheduling": {
+          "sort_by_complexity": "process simple recipes first",
+          "error_recovery": "fast failure for problematic files",
+          "resource_monitoring": "adjust processing based on system load"
+        },
+        "performance_optimization": {
+          "cache_similar_recipes": true,
+          "reuse_extraction_patterns": true,
+          "optimize_llm_calls": "batch similar requests"
+        }
+      }
     },
     "monitoring": {
       "performance_metrics": {
         "processing_time_per_recipe": true,
         "success_rate": true,
         "error_rate_by_type": true,
-        "resource_usage": true
+        "resource_usage": true,
+        "cache_efficiency": true,
+        "batch_throughput": true
       },
       "alerts": {
-        "high_error_rate": 0.2,
-        "slow_processing": 60,
-        "disk_space_low": 0.1
+        "high_error_rate": 0.15,
+        "slow_processing": 45,
+        "disk_space_low": 0.1,
+        "memory_usage_high": 0.8
       },
       "reporting": {
         "daily_summary": true,
         "weekly_report": true,
-        "export_metrics": "var/logs/pipeline_metrics.json"
+        "export_metrics": "var/logs/pipeline_metrics.json",
+        "dashboard_integration": "real-time performance dashboard"
+      },
+      "monitoring_enforcement": {
+        "automated_alerts": "send notifications for threshold breaches",
+        "performance_regression_detection": true,
+        "resource_optimization_suggestions": true,
+        "predictive_failure_detection": true
+      }
+    },
+    "error_handling": {
+      "error_categorization": {
+        "file_format_errors": "unsupported or corrupted files",
+        "extraction_errors": "LLM or OCR processing failures",
+        "validation_errors": "missing required fields or invalid content",
+        "processing_errors": "system or resource-related failures"
+      },
+      "recovery_strategies": {
+        "retry_logic": {
+          "max_attempts": 2,
+          "backoff_strategy": "linear",
+          "retry_conditions": ["timeout", "temporary_failure"]
+        },
+        "fallback_processing": {
+          "llm_fallback": "use rule-based extraction",
+          "ocr_fallback": "use text-based extraction",
+          "manual_intervention": "flag for human review"
+        },
+        "graceful_degradation": {
+          "partial_extraction": "accept recipes with some missing fields",
+          "quality_indicators": "mark extraction confidence levels",
+          "enhancement_suggestions": "recommend improvements"
+        }
+      }
+    },
+    "validation_enforcement": {
+      "pre_processing_validation": {
+        "validate_input_files": "python scripts/validate_input_files.py",
+        "check_directory_structure": "python scripts/check_directories.py",
+        "verify_dependencies": "python scripts/check_pipeline_dependencies.py"
+      },
+      "processing_validation": {
+        "validate_extraction_results": "python scripts/validate_extractions.py",
+        "check_spanish_content": "python scripts/validate_spanish_pipeline.py",
+        "verify_output_format": "python scripts/validate_json_output.py"
+      },
+      "post_processing_validation": {
+        "validate_pipeline_metrics": "python scripts/check_pipeline_performance.py",
+        "verify_audit_trails": "python scripts/validate_audit_logs.py",
+        "check_error_handling": "python scripts/test_error_scenarios.py"
+      },
+      "automated_testing": {
+        "pipeline_integration_tests": "pytest tests/integration/test_pipeline.py",
+        "performance_regression_tests": "pytest tests/performance/test_pipeline_performance.py",
+        "error_handling_tests": "pytest tests/unit/test_pipeline_errors.py"
+      }
+    },
+    "quality_metrics": {
+      "success_criteria": {
+        "extraction_success_rate": "> 95%",
+        "processing_time_per_recipe": "< 30 seconds",
+        "spanish_content_accuracy": "> 95%",
+        "required_field_completion": "100%"
+      },
+      "performance_targets": {
+        "batch_processing_time": "< 2 minutes for 5 recipes",
+        "error_rate": "< 5%",
+        "cache_hit_rate": "> 75%",
+        "resource_efficiency": "< 80% CPU, < 70% memory"
       }
     }
   }

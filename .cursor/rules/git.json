@@ -30,7 +30,13 @@
         "fix(core): resolve LLM timeout issues",
         "docs(api): update recipe processing guide",
         "refactor(tests): consolidate unit test structure"
-      ]
+      ],
+      "enforcement": {
+        "validate_conventional_format": true,
+        "validate_scope_exists": true,
+        "validate_description_present": true,
+        "block_commit_if_invalid": true
+      }
     },
     "branch": {
       "naming": {
@@ -40,13 +46,33 @@
           "bugfix/fix-pdf-parsing",
           "cleanup/file-organization",
           "release/v1.5.1"
-        ]
+        ],
+        "validation": {
+          "enforce_pattern": true,
+          "max_length": 50,
+          "require_description": true,
+          "block_invalid_names": true
+        }
       },
       "protection": {
         "main": {
           "require_review": true,
           "require_tests": true,
-          "require_status_checks": ["pytest", "lint", "type-check"]
+          "require_status_checks": ["pytest", "lint", "type-check"],
+          "enforce_quality_gates": true,
+          "require_documentation_updates": true
+        }
+      },
+      "workflow_integration": {
+        "documentation_updates": {
+          "trigger_on_merge": "docs/CHANGELOG-RECENT.md update required",
+          "validate_docs_changed": "if code changes affect user workflows",
+          "check_development_md": "if architecture or performance changes"
+        },
+        "test_requirements": {
+          "performance_changes": "require performance tests updates",
+          "architecture_changes": "require integration tests updates",
+          "new_features": "require comprehensive test coverage"
         }
       }
     },
@@ -83,7 +109,7 @@
         "coverage.xml",
         "*.cover",
         "",
-        "# Logs & Runtime Data", 
+        "# Logs & Runtime Data",
         "*.log",
         "var/logs/",
         "var/test-results/",
@@ -92,17 +118,65 @@
         "# Project Specific",
         "output/",
         "temp/",
-        "scripts/archive/"
-      ]
+        "scripts/archive/",
+        "",
+        "# Temporary Files (SHOULD NOT EXIST)",
+        "temp_*",
+        "quick_test_*",
+        "*_temp.py",
+        "test_*.temp"
+      ],
+      "validation": {
+        "check_for_temp_files": true,
+        "alert_on_sensitive_files": true,
+        "prevent_log_commits": true
+      }
     },
     "hooks": {
       "pre_commit": [
         "pytest tests/unit/",
         "black --check .",
         "flake8",
-        "mypy core/"
+        "mypy core/",
+        "python -c \"import sys; sys.exit(1 if any('temp_' in f or 'quick_test_' in f for f in open('.gitignore').read().split()) else 0)\""
       ],
-      "commit_msg": "validate_conventional_commits"
+      "commit_msg": "validate_conventional_commits",
+      "pre_push": [
+        "pytest tests/performance/",
+        "python scripts/validate_architecture.py",
+        "python scripts/check_documentation.py"
+      ],
+      "post_merge": [
+        "python docs/tools/run_automation.py",
+        "pytest --cov=core --cov-fail-under=85"
+      ]
+    },
+    "quality_gates": {
+      "pre_merge_checklist": [
+        "all_tests_passing",
+        "documentation_updated",
+        "no_temporary_files",
+        "architecture_compliance",
+        "performance_regression_check"
+      ],
+      "automated_checks": {
+        "temp_file_detection": "find . -name 'temp_*' -o -name 'quick_test_*' | wc -l = 0",
+        "test_integration": "pytest tests/performance/test_performance.py -v",
+        "documentation_freshness": "git diff --name-only HEAD~1 HEAD | grep -E '(docs/|README)' || echo 'No doc updates needed'",
+        "architecture_validation": "python -c \"import core.domain.recipe.processors.intelligent_batch\""
+      }
+    },
+    "workflow_enforcement": {
+      "documentation_integration": {
+        "before_commit": "check if docs/ changes needed based on code changes",
+        "enforce_changelog": "major changes require CHANGELOG-RECENT.md updates",
+        "validate_readme": "feature changes may require README updates"
+      },
+      "test_enhancement": {
+        "before_merge": "verify tests enhanced not just created",
+        "cleanup_verification": "ensure no temporary test files remain",
+        "integration_check": "verify new tests integrated into existing suites"
+      }
     }
   }
 }

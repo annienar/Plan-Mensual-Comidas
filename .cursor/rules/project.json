@@ -15,7 +15,24 @@
         ".png"
       ],
       "languages": ["es", "en"],
-      "output_formats": ["json", "md"]
+      "output_formats": ["json", "md"],
+      "validation_rules": {
+        "spanish_content_requirement": {
+          "enforce": true,
+          "validation": "validate primary content is in Spanish",
+          "fallback": "translate English content to Spanish"
+        },
+        "ingredient_format_validation": {
+          "pattern": "- cantidad unidad ingrediente",
+          "examples": ["- 2 tazas harina", "- 1 kg pollo", "- 3 dientes ajo"],
+          "enforcement": "validate and correct format automatically"
+        },
+        "preparation_steps_validation": {
+          "require_numbered_steps": true,
+          "spanish_cooking_verbs": ["freír", "hornear", "hervir", "saltear", "asar"],
+          "validate_step_clarity": true
+        }
+      }
     },
     "directory_structure": {
       "enforce_structure": true,
@@ -38,19 +55,48 @@
         "*/test-results/",
         "*/.log/",
         "*/.test_results/"
-      ]
+      ],
+      "enforcement": {
+        "validate_on_commit": true,
+        "auto_create_missing": true,
+        "prevent_forbidden_patterns": true,
+        "specific_validations": {
+          "processor_location": "core/domain/recipe/processors/ only",
+          "test_organization": "no tests outside tests/ directory",
+          "temporary_files": "var/ only for runtime data"
+        }
+      }
     },
     "testing": {
       "min_coverage": 85,
       "required_test_types": [
         "unit",
         "integration",
-        "recipe_processing"
+        "recipe_processing",
+        "performance"
       ],
       "test_organization": {
         "unit_tests": "tests/unit/",
         "integration_tests": "tests/integration/",
+        "performance_tests": "tests/performance/",
         "results_location": "var/test-results/"
+      },
+      "testing_enforcement": {
+        "coverage_gates": {
+          "block_merge_below_85": true,
+          "require_performance_tests": "for processing changes",
+          "require_spanish_test_data": "for language processing features"
+        },
+        "test_enhancement_policy": {
+          "prefer_existing_suites": "add methods to existing TestClasses",
+          "temporary_test_cleanup": "mandatory before commit",
+          "integration_validation": "verify tests run in CI pipeline"
+        },
+        "automated_test_validation": {
+          "check_test_naming": "pytest --collect-only | grep test_",
+          "validate_coverage": "pytest --cov=core --cov-fail-under=85",
+          "performance_regression": "pytest tests/performance/ --benchmark-only"
+        }
       }
     },
     "logging": {
@@ -60,8 +106,16 @@
       "component_logs": [
         "core.llm.client.log",
         "notion.sync.log",
-        "phi_operations.log"
-      ]
+        "phi_operations.log",
+        "performance.log",
+        "recipe_processing.log"
+      ],
+      "logging_enforcement": {
+        "structured_logging": "JSON format for production logs",
+        "spanish_error_messages": "for user-facing errors",
+        "performance_logging": "mandatory for LLM operations",
+        "log_level_validation": "ERROR for failures, INFO for processing steps"
+      }
     },
     "documentation": {
       "require_docstrings": true,
@@ -76,6 +130,23 @@
       "auto_update": {
         "directory_structure": "docs/directory-structure.md",
         "development_guide": "docs/development.md"
+      },
+      "documentation_enforcement": {
+        "integration_rules": {
+          "before_creating_new": "check existing documentation structure",
+          "enhancement_preference": "update existing files over creating new ones",
+          "decision_tree": {
+            "performance_changes": "docs/development.md Performance Guidelines",
+            "architecture_changes": "docs/development.md Architecture Guidelines", 
+            "user_features": "docs/user-guide.md enhance existing sections",
+            "major_changes": "docs/CHANGELOG-RECENT.md new section at top"
+          }
+        },
+        "validation_requirements": {
+          "spanish_terminology": "use Spanish culinary terms consistently",
+          "example_recipes": "include Spanish recipe examples",
+          "automation_trigger": "run Documentation/tools/run_automation.py after changes"
+        }
       }
     },
     "scripts": {
@@ -85,9 +156,64 @@
         "quality",
         "monitoring",
         "maintenance",
-        "testing"
+        "testing",
+        "validation"
       ],
-      "archive_obsolete": "scripts/archive/"
-    }
+      "archive_obsolete": "scripts/archive/",
+      "script_enforcement": {
+        "validation_scripts": {
+          "architecture_compliance": "scripts/validate_architecture.py",
+          "spanish_field_validation": "scripts/validate_spanish_fields.py",
+          "test_integration_check": "scripts/check_test_integration.py",
+          "documentation_freshness": "scripts/check_documentation.py"
+        },
+        "automation_requirements": {
+          "pre_commit_validation": true,
+          "automated_quality_gates": true,
+          "performance_monitoring": true
+        }
+      }
+    },
+    "architecture_compliance": {
+      "dependency_rules": {
+        "domain_layer": {
+          "allowed_dependencies": ["standard_library", "pydantic"],
+          "forbidden_dependencies": ["infrastructure", "external_apis"],
+          "validation": "no circular dependencies allowed"
+        },
+        "application_layer": {
+          "allowed_dependencies": ["domain", "standard_library"],
+          "dependency_injection": "use abstract interfaces",
+          "validation": "application services coordinate domain objects"
+        },
+        "infrastructure_layer": {
+          "allowed_dependencies": ["domain", "application", "external_libraries"],
+          "implementation_rule": "implement domain interfaces",
+          "external_service_rule": "all external calls go through infrastructure"
+        }
+      }
+    },
+    "quality_gates": {
+      "pre_commit_requirements": [
+        "all_tests_passing",
+        "coverage_above_85",
+        "architecture_compliance_validated",
+        "spanish_field_validation_passed",
+        "no_temporary_files_remaining",
+        "documentation_updates_completed"
+      ],
+      "automated_validation": {
+        "architecture_check": "python scripts/validate_architecture.py",
+ 
+        "test_integration": "python scripts/check_test_integration.py",
+        "documentation_check": "python scripts/check_documentation.py",
+        "performance_validation": "pytest tests/performance/ --maxfail=1"
+      },
+      "enforcement_commands": {
+        "validate_all": "python scripts/validate_all.py",
+        "cleanup_temp_files": "find . -name 'temp_*' -delete && find . -name 'quick_test_*' -delete",
+        "architecture_test": "python -c \"import core.domain.recipe.processors.intelligent_batch; print('Architecture OK')\""
+      }
+          }
   }
 }

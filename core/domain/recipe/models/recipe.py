@@ -9,7 +9,7 @@ from datetime import datetime, timezone
 from typing import List, Optional, Dict, Any
 
 from .metadata import RecipeMetadata
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import BaseModel, Field, field_validator, model_validator, model_validator
 
 class Recipe(BaseModel):
     """Recipe domain model.
@@ -436,3 +436,51 @@ class Recipe(BaseModel):
         blocks.extend(self.metadata.to_notion_blocks())
 
         return blocks
+
+    def is_valid(self) -> bool:
+        """Check if recipe is valid.
+
+        Returns:
+            bool: True if recipe is valid, False otherwise
+        """
+        try:
+            # Check basic required fields
+            if not self.title or not self.title.strip():
+                return False
+            if not self.ingredients:
+                return False
+            if not self.instructions:
+                return False
+            if not self.metadata:
+                return False
+            
+            # Check if title matches metadata
+            if self.title != self.metadata.title:
+                return False
+                
+            return True
+        except Exception:
+            return False
+
+    def to_json(self) -> str:
+        """Convert recipe to JSON string.
+
+        Returns:
+            str: Recipe as JSON string
+        """
+        import json
+        return json.dumps(self.to_dict(), indent=2, ensure_ascii=False)
+
+    @classmethod
+    def from_json(cls, json_str: str) -> 'Recipe':
+        """Create recipe from JSON string.
+
+        Args:
+            json_str: JSON string data
+
+        Returns:
+            Recipe: Created recipe
+        """
+        import json
+        data = json.loads(json_str)
+        return cls.from_dict(data)

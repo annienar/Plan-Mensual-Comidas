@@ -7,7 +7,7 @@ This module contains the recipe metadata domain model.
 from datetime import datetime
 from typing import List, Optional, Dict, Any
 
-from pydantic import BaseModel, Field, validator, constr, conint, conlist
+from pydantic import BaseModel, Field, field_validator, ValidationInfo, constr, conint, conlist
 
 class RecipeMetadata(BaseModel):
     """Recipe metadata model.
@@ -59,7 +59,7 @@ class RecipeMetadata(BaseModel):
 )
     date: str = Field(
         default_factory=lambda: datetime.now().strftime("%Y-%m-%d"), 
-        description="Fecha de la receta en formato YYYY - MM - DD"
+        description="Fecha de la receta en formato YYYY-MM-DD"
 )
     dificultad: Optional[str] = Field(
         None, 
@@ -89,7 +89,8 @@ class RecipeMetadata(BaseModel):
         description="URL de origen de la receta"
 )
 
-    @validator('title')
+    @field_validator('title')
+    @classmethod
     def validate_title(cls, v: str) -> str:
         """Validate recipe title.
 
@@ -106,7 +107,8 @@ class RecipeMetadata(BaseModel):
             raise ValueError("Title cannot be empty")
         return v.strip()
 
-    @validator('date')
+    @field_validator('date')
+    @classmethod
     def validate_date(cls, v: str) -> str:
         """Validate recipe date.
 
@@ -120,7 +122,7 @@ class RecipeMetadata(BaseModel):
             ValueError: If date is invalid
         """
         # Try multiple date formats
-        formats = ["%Y-%m-%d", "%Y - %m - %d"]
+        formats = ["%Y-%m-%d", "%Y - %m - %d", "%Y-%m-%dT%H:%M:%S.%f"]
         
         for fmt in formats:
             try:
@@ -130,10 +132,10 @@ class RecipeMetadata(BaseModel):
             except ValueError:
                 continue
         
-        raise ValueError("Date must be in YYYY-MM-DD or YYYY - MM - DD format")
-        return v
+        raise ValueError("Date must be in YYYY-MM-DD, YYYY - MM - DD, or ISO format")
 
-    @validator("dificultad")
+    @field_validator("dificultad")
+    @classmethod
     def validate_dificultad(cls, v: Optional[str]) -> Optional[str]:
         """Validate difficulty level.
 
@@ -181,7 +183,8 @@ class RecipeMetadata(BaseModel):
 
         raise ValueError(f"Invalid difficulty level: {v}. Must be one of ['easy', 'medium', 'hard'] or ['Fácil', 'Media', 'Difícil']")
 
-    @validator('tags')
+    @field_validator('tags')
+    @classmethod
     def validate_tags(cls, v: List[str]) -> List[str]:
         """Validate tags.
 
@@ -206,13 +209,14 @@ class RecipeMetadata(BaseModel):
 
         return v
 
-    @validator('tiempo_total')
-    def validate_tiempo_total(cls, v: Optional[int], values: Dict[str, Any]) -> Optional[int]:
+    @field_validator('tiempo_total')
+    @classmethod
+    def validate_tiempo_total(cls, v: Optional[int], info: ValidationInfo) -> Optional[int]:
         """Validate total time.
 
         Args:
             v: Total time to validate
-            values: Other field values
+            info: Validation info containing other field values
 
         Returns:
             Optional[int]: Validated total time
@@ -220,9 +224,9 @@ class RecipeMetadata(BaseModel):
         Raises:
             ValueError: If total time is invalid
         """
-        if v is not None:
-            prep_time = values.get('tiempo_preparacion', 0) or 0
-            cook_time = values.get('tiempo_coccion', 0) or 0
+        if v is not None and info.data:
+            prep_time = info.data.get('tiempo_preparacion', 0) or 0
+            cook_time = info.data.get('tiempo_coccion', 0) or 0
             if v < prep_time + cook_time:
                 raise ValueError("Total time must be greater than or equal to preparation time plus cooking time")
         return v

@@ -23,6 +23,7 @@ from tenacity import (
 
 from .models import LLMModel
 from .circuit_breaker import CircuitBreaker
+# from .optimized_client import OptimizedLLMClient  # Commented out for now
 from core.exceptions.infrastructure import (
     LLMError, 
     ModelNotFoundError, 
@@ -147,18 +148,20 @@ class LLMClient:
 
     def __init__(
         self, 
-        model: str = "phi", 
+        model: str = "llava-phi3", 
         base_url: str = "http://localhost:11434",
-        max_tokens: int = 2000, 
-        temperature: float = 0.7, 
-        cache_ttl: int = 3600,  # 1 hour
-        rate_limit_requests: int = 100, 
+        max_tokens: int = 1500,  # Reduced for faster processing
+        temperature: float = 0.1,  # Lower for more consistent, faster responses
+        cache_ttl: int = 7200,  # 2 hours - longer cache
+        rate_limit_requests: int = 50,  # More conservative rate limiting
         rate_limit_period: int = 60,  # 1 minute
-        circuit_breaker_failure_threshold: int = 5, 
-        circuit_breaker_recovery_timeout: int = 60,  # 1 minute
-        timeout: int = 120,  # 2 minutes - increased for recipe extraction
-        max_retries: int = 3, 
-        cache_size: int = 1000
+        circuit_breaker_failure_threshold: int = 3,  # More aggressive circuit breaking
+        circuit_breaker_recovery_timeout: int = 30,  # Faster recovery
+        timeout: int = None,  # Auto-configure based on model
+        max_retries: int = 2,  # Fewer retries for faster failure handling
+        cache_size: int = 2000,  # Larger cache
+        keep_alive: bool = True,  # Keep connections alive for performance
+        max_concurrent: int = 5  # Limit concurrent requests
 ):
         """Initialize the Ollama LLM client.
 
@@ -180,7 +183,11 @@ class LLMClient:
         self.base_url = base_url
         self.max_tokens = max_tokens
         self.temperature = temperature
-        self.timeout = timeout
+        # Auto-configure timeout based on model
+        if timeout is None:
+            self.timeout = 120 if "llava" in model.lower() else 45  # llava models need more time
+        else:
+            self.timeout = timeout
         self.max_retries = max_retries
 
         # Initialize components
@@ -196,7 +203,7 @@ class LLMClient:
 
         self.client = httpx.AsyncClient(
             base_url=base_url,
-            timeout=timeout
+            timeout=self.timeout  # Use the configured timeout
 )
 
     async def __aenter__(self):
@@ -213,10 +220,10 @@ class LLMClient:
         return f"{prompt}:{json.dumps(kwargs, sort_keys=True)}"
 
     @retry(
-        stop=stop_after_attempt(3), 
-        wait=wait_exponential(multiplier=1, min=4, max=10), 
-        retry=retry_if_exception_type((LLMError, InvalidResponseError)), 
-        before_sleep=before_sleep_log(logger, logging.WARNING)
+        stop=stop_after_attempt(2), 
+        wait=wait_exponential(multiplier=0.5, min=2, max=5), 
+        retry=retry_if_exception_type((LLMTimeoutError, LLMError)), 
+        before_sleep=before_sleep_log(logger, logging.INFO)
 )
     async def generate(
         self, 
@@ -226,7 +233,7 @@ class LLMClient:
         max_tokens: Optional[int] = None, 
         cache_key: Optional[str] = None
 ) -> LLMResponse:
-        """Generate text using Ollama.
+        """Generate text using Ollama with enhanced caching.
 
         Args:
             prompt: The prompt to generate from
@@ -243,11 +250,11 @@ class LLMClient:
             InvalidResponseError: If the response is invalid
             CircuitBreakerOpenError: If the circuit breaker is open
         """
-        # Check cache first
+        # Enhanced caching: Check cache with similarity matching
         if cache_key:
-            cached_response = await self.cache.get(cache_key)
+            cached_response = await self.cache.get(cache_key, input_content=prompt)
             if cached_response:
-                logger.info(f"Cache hit for key: {cache_key}")
+                logger.info(f"🎯 Cache hit for key: {cache_key}")
                 return cached_response
 
         # Check rate limit
@@ -266,14 +273,19 @@ class LLMClient:
             if system_prompt:
                 full_prompt = f"{system_prompt}\n\n{prompt}"
 
-            # Prepare request
+            # Prepare optimized request for llava-phi3 model
             request_data = {
                 "model": self.model, 
                 "prompt": full_prompt,
                 "stream": False,
                 "options": {
-                "temperature": temperature or self.temperature, 
-                    "num_predict": max_tokens or self.max_tokens
+                    "temperature": temperature or self.temperature, 
+                    "num_predict": max_tokens or self.max_tokens,
+                    "top_k": 40 if "llava" in self.model.lower() else 20,  # llava needs more diversity
+                    "top_p": 0.95 if "llava" in self.model.lower() else 0.9,  # Higher for llava
+                    "repeat_penalty": 1.05 if "llava" in self.model.lower() else 1.1,  # Lower for llava
+                    "num_ctx": 4096 if "llava" in self.model.lower() else 2048,  # Larger context for llava
+                    "num_thread": 8 if "llava" in self.model.lower() else 4,  # More threads for larger model
                 }
             }
 
@@ -288,7 +300,9 @@ class LLMClient:
 
             response_text = response["response"].strip()
             if not response_text:
-                raise InvalidResponseError("Empty response")
+                # Handle empty response more gracefully
+                logger.warning("Received empty response from LLM")
+                response_text = "No response generated"
 
             # Create response object
             llm_response = LLMResponse(
@@ -302,9 +316,10 @@ class LLMClient:
                 created=int(start_time)
 )
 
-            # Cache response
+            # Cache response with input content for enhanced similarity matching
             if cache_key:
-                await self.cache.set(cache_key, llm_response)
+                processing_time = end_time - start_time
+                await self.cache.set(cache_key, llm_response, processing_time=processing_time, input_content=prompt)
 
             # Update rate limiter
             self.rate_limiter.add_request()

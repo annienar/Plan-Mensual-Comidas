@@ -1,0 +1,96 @@
+{
+  "development_practices": {
+    "documentation_integration": {
+      "description": "MANDATORY: Update existing documentation instead of creating new files",
+      "before_any_documentation": {
+        "step_1": "examine docs/ directory structure",
+        "step_2": "identify existing file that should contain the information",
+        "step_3": "enhance existing file instead of creating new one"
+      },
+      "decision_tree": {
+        "performance_changes": {
+          "target": "docs/development.md",
+          "section": "Performance Guidelines",
+          "action": "add_to_existing_section"
+        },
+        "architecture_updates": {
+          "target": "docs/development.md",
+          "section": "Architecture Guidelines", 
+          "action": "update_existing_patterns"
+        },
+        "major_changes": {
+          "target": "docs/CHANGELOG-RECENT.md",
+          "action": "add_new_section_at_top"
+        },
+        "user_features": {
+          "target": "docs/user-guide.md",
+          "action": "enhance_existing_sections"
+        },
+        "technical_decisions": {
+          "target": "docs/decisions/",
+          "action": "create_adr_only"
+        }
+      },
+      "prohibited_actions": [
+        "creating strategy files",
+        "creating guide files for existing topics", 
+        "duplicating content across files",
+        "creating new README files"
+      ]
+    },
+    "architecture_compliance": {
+      "description": "MANDATORY: Follow existing codebase architecture patterns",
+      "before_creating_files": {
+        "step_1": "examine existing directory structure",
+        "step_2": "identify pattern for similar components",
+        "step_3": "follow established conventions"
+      },
+      "location_patterns": {
+        "domain_logic": "core/domain/",
+        "processors": "core/domain/recipe/processors/",
+        "extractors": "core/domain/recipe/extractors/",
+        "models": "core/domain/recipe/models/",
+        "infrastructure": "core/infrastructure/"
+      },
+      "naming_conventions": {
+        "model_fields": "MUST be in Spanish (nombre, ingredientes, preparacion)",
+        "class_names": "English for classes, Spanish for fields",
+        "dependencies": "must point inward (clean architecture)"
+      }
+    },
+    "test_enhancement": {
+      "description": "MANDATORY: Enhance existing tests instead of creating temporary ones",
+      "before_creating_tests": {
+        "step_1": "check tests/performance/, tests/unit/, tests/integration/",
+        "step_2": "identify existing TestClass to enhance",
+        "step_3": "add test methods to existing class"
+      },
+      "temporary_file_policy": {
+        "allowed": "only for initial validation",
+        "required": "integration plan before creation",
+        "mandatory": "cleanup after integration",
+        "timeline": "within same development session"
+      },
+      "enhancement_targets": {
+        "performance": "tests/performance/test_performance.py - TestPerformance class",
+        "unit": "tests/unit/ - enhance existing modules",
+        "integration": "tests/integration/ - enhance existing suites"
+      }
+    },
+    "quality_gates": {
+      "description": "Mandatory checks before work completion",
+      "checklist": [
+        "architecture_compliance_verified",
+        "existing_documentation_enhanced", 
+        "tests_integrated_not_temporary",
+        "temporary_files_cleaned_up",
+        "no_regressions_introduced"
+      ],
+      "verification_commands": {
+        "test_integration": "pytest tests/performance/test_performance.py -v",
+        "temp_file_check": "find . -name 'temp_*' -o -name 'quick_test_*'",
+        "documentation_check": "check docs/development.md for updates"
+      }
+    }
+  }
+} 

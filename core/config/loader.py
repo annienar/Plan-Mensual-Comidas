@@ -69,11 +69,11 @@ class ConfigLoader:
             LLMSettings: LLM settings
         """
         return LLMSettings(
-            api_key=self._get_str("OPENAI_API_KEY"),
-            model=self._get_str("OPENAI_MODEL", "gpt-4"),
-            temperature=self._get_float("OPENAI_TEMPERATURE", 0.7),
-            max_tokens=self._get_int("OPENAI_MAX_TOKENS", 1000),
-            timeout=self._get_int("OPENAI_TIMEOUT", 30),
+            model=self._get_str("LLM_MODEL", "llava-phi3"),
+            temperature=self._get_float("LLM_TEMPERATURE", 0.7),
+            max_tokens=self._get_int("LLM_MAX_TOKENS", 1000),
+            timeout=self._get_int("LLM_TIMEOUT", 30),
+            base_url=self._get_str("LLM_BASE_URL", "http://localhost:11434"),
         )
 
     def _load_notion_settings(self) -> NotionSettings:

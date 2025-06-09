@@ -13,7 +13,7 @@ from datetime import datetime
 from typing import List, Optional, Dict, Any, Union
 
 from .processor import RecipeProcessor
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 import logging
 logger = logging.getLogger(__name__)
 

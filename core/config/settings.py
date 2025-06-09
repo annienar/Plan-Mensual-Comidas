@@ -13,18 +13,18 @@ class LLMSettings(BaseModel):
     """LLM settings.
 
     Attributes:
-        api_key: OpenAI API key
-        model: Model to use
+        model: Model to use (llava-phi3 for commercial compliance and Spanish support)
         temperature: Temperature for generation
         max_tokens: Maximum tokens to generate
         timeout: Request timeout in seconds
+        base_url: Ollama base URL for local deployment
     """
 
-    api_key: str = Field(..., description="OpenAI API key")
-    model: str = Field("gpt - 4", description="Model to use")
+    model: str = Field("llava-phi3", description="Model to use (commercial-compliant only)")
     temperature: float = Field(0.7, description="Temperature for generation")
     max_tokens: int = Field(1000, description="Maximum tokens to generate")
     timeout: int = Field(30, description="Request timeout in seconds")
+    base_url: str = Field("http://localhost:11434", description="Ollama base URL")
 
 
 class NotionSettings(BaseModel):
